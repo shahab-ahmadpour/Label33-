@@ -44,13 +44,25 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 
 var app = builder.Build();
 
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+    app.Urls.Add($"http://0.0.0.0:{port}");
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor
+        | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+});
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+}
+else
+{
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRequestLocalization();
 app.UseRouting();

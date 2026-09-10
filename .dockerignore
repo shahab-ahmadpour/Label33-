@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/*.user
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/App_Data/
+.vs/
+.git/
+label33.dev.db*
+**/wwwroot/lib/**/*.map
