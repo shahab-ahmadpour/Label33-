@@ -4,6 +4,9 @@
   const nav = document.getElementById('site-nav');
   const burger = document.getElementById('nav-burger');
 
+  const FRAME_COUNT = 4;
+  const FRAME_POSITIONS = ['0% 0', '33.333% 0', '66.666% 0', '100% 0'];
+
   function clamp(v, a, b) {
     return Math.max(a, Math.min(b, v));
   }
@@ -12,51 +15,68 @@
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
   }
 
-  /**
-   * One wing group rotated around the shoulder.
-   * Angle goes from raised (~-42°) to lowered (~+38°) — clearly visible flap.
-   */
-  function flapWings(svg, phase) {
-    if (!svg) return;
-    const pivot = svg.querySelector('.diyar-svg__wing-pivot');
-    if (!pivot) return;
+  function setFlapFrame(el, frameIndex) {
+    if (!el) return;
+    const i = ((frameIndex % FRAME_COUNT) + FRAME_COUNT) % FRAME_COUNT;
+    el.style.backgroundPosition = FRAME_POSITIONS[i];
+    el.dataset.frame = String(i + 1);
+  }
 
-    // Asymmetric flap: faster downstroke feel via skewed sine
-    const s = Math.sin(phase);
-    const angle = s * 40; // -40° (up) … +40° (down)
-    const squash = 1 - Math.abs(s) * 0.12; // foreshorten at mid-stroke
+  function runSpriteFlap(el, { fps = 8 } = {}) {
+    if (!el) return () => {};
+    let frame = 0;
+    let last = performance.now();
+    let raf = 0;
+    let stopped = false;
+    const interval = 1000 / fps;
 
-    pivot.setAttribute(
-      'transform',
-      `rotate(${angle.toFixed(2)} 348 185) translate(348 185) scale(1 ${squash.toFixed(3)}) translate(-348 -185)`
-    );
+    setFlapFrame(el, 0);
+
+    function tick(now) {
+      if (stopped) return;
+      if (now - last >= interval) {
+        last = now;
+        frame = (frame + 1) % FRAME_COUNT;
+        setFlapFrame(el, frame);
+      }
+      raf = requestAnimationFrame(tick);
+    }
+
+    raf = requestAnimationFrame(tick);
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(raf);
+    };
   }
 
   function runIntroFlight(birdEl, onDone) {
-    const svg = birdEl.querySelector('.diyar-svg');
+    const sprite = birdEl.querySelector('.diyar-flap');
     const duration = 5600;
     const start = performance.now();
-    let phase = 0;
     let raf = 0;
     let stopped = false;
+    let frame = 0;
+    let lastFrameAt = start;
+
+    setFlapFrame(sprite, 0);
 
     function tick(now) {
       if (stopped) return;
       const raw = clamp((now - start) / duration, 0, 1);
       const e = easeInOutCubic(raw);
 
-      // ~2.2 flaps/sec mid-flight, a bit slower at ends
-      const flapSpeed = 0.28 + Math.sin(e * Math.PI) * 0.16;
-      phase += flapSpeed;
+      const frameInterval = 110 - Math.sin(e * Math.PI) * 40;
+      if (now - lastFrameAt >= frameInterval) {
+        lastFrameAt = now;
+        frame = (frame + 1) % FRAME_COUNT;
+        setFlapFrame(sprite, frame);
+      }
 
-      // Lift on downstroke (positive sin = wing down)
-      const wingDown = (Math.sin(phase) + 1) / 2;
-      const bob = (wingDown - 0.5) * -5.5;
-
-      const x = -48 + e * 158;
-      const y = 60 - e * 40 + bob;
-      const tilt = -12 + e * 22 + Math.sin(phase) * 5;
-      const scale = 0.86 + Math.sin(e * Math.PI) * 0.16;
+      const bob = frame === 2 ? -3.2 : frame === 1 || frame === 3 ? -1.2 : 0.8;
+      const x = -52 + e * 164;
+      const y = 58 - e * 36 + bob;
+      const tilt = -8 + e * 16 + (frame === 0 ? -3 : frame === 2 ? 4 : 0);
+      const scale = 0.84 + Math.sin(e * Math.PI) * 0.18;
 
       let opacity = 1;
       if (raw < 0.06) opacity = raw / 0.06;
@@ -66,8 +86,6 @@
       birdEl.style.top = `${y}%`;
       birdEl.style.opacity = String(clamp(opacity, 0, 1));
       birdEl.style.transform = `translate(-50%, -50%) rotate(${tilt}deg) scale(${scale})`;
-
-      flapWings(svg, phase);
 
       if (raw < 1) {
         raf = requestAnimationFrame(tick);
@@ -84,16 +102,10 @@
     };
   }
 
-  function idleFlap(root) {
-    const svgs = root.querySelectorAll('.diyar-svg[data-flap="idle"]');
-    if (!svgs.length) return;
-    let phase = 0;
-    function tick() {
-      phase += 0.14;
-      svgs.forEach((svg) => flapWings(svg, phase));
-      requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
+  function idleFlaps(root) {
+    root.querySelectorAll('.diyar-flap[data-flap="idle"]').forEach((el) => {
+      runSpriteFlap(el, { fps: 8 });
+    });
   }
 
   function finishIntro(stopFlight) {
@@ -121,6 +133,6 @@
     }
   }
 
-  idleFlap(document);
+  idleFlaps(document);
   burger?.addEventListener('click', () => nav?.classList.toggle('is-open'));
 })();
