@@ -18,7 +18,7 @@
       intro.remove();
     } else {
       sessionStorage.setItem('label33.intro.played', '1');
-      window.setTimeout(finishIntro, 4200);
+      window.setTimeout(finishIntro, 5600);
       skip?.addEventListener('click', finishIntro);
     }
   }

@@ -236,36 +236,42 @@ button, input, select { font: inherit; color: inherit; }
 .intro.is-done {
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.9s var(--ease);
+  transition: opacity 1.1s var(--ease);
 }
 
 .intro__bird {
-  width: min(42vw, 420px);
+  width: min(46vw, 520px);
   position: absolute;
-  left: -30%;
-  top: 42%;
+  left: -40%;
+  top: 48%;
   transform: translateY(-50%);
-  animation: diyar-flight 3.6s var(--ease) forwards;
+  mix-blend-mode: multiply;
+  filter: contrast(1.05);
+  animation: diyar-flight 5.2s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+  will-change: transform, left, top, opacity;
 }
 
 .intro__copy {
   text-align: center;
   opacity: 0;
-  animation: fade-up 1s var(--ease) 1.6s forwards;
+  animation: fade-up 1.2s var(--ease) 2.1s forwards;
+  z-index: 2;
 }
 
 .intro__copy .brand-num {
   font-family: var(--font-display);
   font-size: clamp(3rem, 10vw, 7rem);
   margin: 0;
+  letter-spacing: -0.04em;
 }
 
 .intro__copy .tag {
   margin: 0.75rem 0 0;
   text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font-size: 0.8rem;
+  letter-spacing: 0.22em;
+  font-size: 0.78rem;
   white-space: pre-line;
+  color: var(--charcoal-soft);
 }
 
 .intro__skip {
@@ -279,17 +285,45 @@ button, input, select { font: inherit; color: inherit; }
   font-size: 0.7rem;
   color: var(--muted);
   cursor: pointer;
+  z-index: 3;
 }
 
 @keyframes diyar-flight {
-  0% { left: -35%; top: 55%; transform: translateY(-50%) rotate(-8deg) scale(0.9); }
-  45% { left: 38%; top: 46%; transform: translateY(-50%) rotate(0deg) scale(1); }
-  70% { left: 42%; top: 44%; transform: translateY(-50%) rotate(2deg) scale(1.02); }
-  100% { left: 110%; top: 18%; transform: translateY(-50%) rotate(12deg) scale(0.95); opacity: 0.85; }
+  0% {
+    left: -42%;
+    top: 62%;
+    opacity: 0;
+    transform: translateY(-50%) rotate(-14deg) scale(0.86);
+  }
+  12% {
+    opacity: 1;
+  }
+  38% {
+    left: 28%;
+    top: 46%;
+    transform: translateY(-50%) rotate(-2deg) scale(1);
+  }
+  52% {
+    left: 36%;
+    top: 44%;
+    transform: translateY(-50%) rotate(0deg) scale(1.03);
+  }
+  78% {
+    left: 72%;
+    top: 28%;
+    opacity: 1;
+    transform: translateY(-50%) rotate(8deg) scale(0.98);
+  }
+  100% {
+    left: 118%;
+    top: 12%;
+    opacity: 0;
+    transform: translateY(-50%) rotate(16deg) scale(0.9);
+  }
 }
 
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -335,9 +369,11 @@ button, input, select { font: inherit; color: inherit; }
 .hero__visual img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
-  animation: hero-drift 12s var(--ease) infinite alternate;
+  padding: clamp(1.5rem, 5vw, 4rem);
+  mix-blend-mode: multiply;
+  animation: hero-drift 14s var(--ease) infinite alternate;
 }
 
 @keyframes hero-drift {
