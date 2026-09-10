@@ -241,32 +241,46 @@ button, input, select { font: inherit; color: inherit; }
 
 .intro__bird {
   position: absolute;
-  left: -52%;
+  left: -48%;
   top: 58%;
-  width: min(56vw, 360px);
+  width: min(48vw, 300px);
   height: auto;
-  aspect-ratio: 500 / 667;
-  max-height: 42vh;
+  aspect-ratio: 1 / 1;
+  max-height: 46vh;
   transform: translate(-50%, -50%);
   opacity: 0;
   will-change: transform, left, top, opacity;
   pointer-events: none;
+  filter: drop-shadow(0 18px 28px color-mix(in srgb, var(--charcoal) 18%, transparent));
 }
 
 .diyar-flap {
+  position: relative;
   width: 100%;
   height: 100%;
-  background-image: url("/brand/diyar/diyar-flap-sheet.png");
-  background-repeat: no-repeat;
-  background-size: 400% 100%;
-  background-position: 0% 0;
-  image-rendering: auto;
+}
+
+.diyar-flap__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 90ms linear;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.diyar-flap__frame.is-active {
+  opacity: 1;
 }
 
 .intro__copy {
   text-align: center;
   opacity: 0;
-  animation: fade-up 1.2s var(--ease) 2.2s forwards;
+  animation: fade-up 1.2s var(--ease) 3.1s forwards;
   z-index: 2;
 }
 
@@ -307,8 +321,8 @@ button, input, select { font: inherit; color: inherit; }
 
 @media (max-width: 700px) {
   .intro__bird {
-    width: min(68vw, 280px);
-    max-height: 36vh;
+    width: min(62vw, 240px);
+    max-height: 40vh;
   }
 }
 
@@ -560,9 +574,10 @@ button, input, select { font: inherit; color: inherit; }
 }
 
 .diyar-flap--pose {
-  width: min(100%, 220px);
-  aspect-ratio: 500 / 667;
+  width: min(100%, 240px);
+  aspect-ratio: 1 / 1;
   height: auto;
+  margin-inline: auto;
 }
 
 /* Cart / checkout / auth */
