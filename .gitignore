@@ -1,0 +1,8 @@
+## Ignore
+**/bin/
+**/obj/
+**/*.user
+**/*.db
+**/App_Data/
+.vs/
+label33.dev.db*

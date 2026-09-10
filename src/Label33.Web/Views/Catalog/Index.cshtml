@@ -1,0 +1,11 @@
+@model IReadOnlyList<Label33.Application.Catalog.ProductListItemDto>
+@{
+    ViewData["Title"] = "Catalog";
+}
+<h1>Catalog</h1>
+<ul>
+@foreach (var p in Model)
+{
+    <li><a href="/products/@p.Slug">@p.Name</a></li>
+}
+</ul>

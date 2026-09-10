@@ -1,0 +1,16 @@
+@{
+    ViewData["Title"] = "Checkout";
+}
+<h1>Checkout</h1>
+<p>Placeholder form — final UI deferred.</p>
+<form asp-action="Place" method="post">
+    @Html.AntiForgeryToken()
+    <input name="fullName" placeholder="Full name" required />
+    <input name="phone" placeholder="Phone" required />
+    <input name="province" placeholder="Province" required />
+    <input name="city" placeholder="City" required />
+    <input name="postalCode" placeholder="Postal" required />
+    <input name="line1" placeholder="Address" required />
+    <input name="couponCode" placeholder="Coupon" />
+    <button type="submit">Pay (Mock)</button>
+</form>

@@ -1,0 +1,19 @@
+@model Label33.Domain.Entities.Cart
+@{
+    ViewData["Title"] = "Cart";
+}
+<h1>Cart</h1>
+@if (Model.Items.Count == 0)
+{
+    <p>Empty</p>
+}
+else
+{
+    <ul>
+    @foreach (var item in Model.Items)
+    {
+        <li>@item.ProductVariantId × @item.Quantity — @item.UnitPriceSnapshot.ToString("N0")</li>
+    }
+    </ul>
+    <p><a asp-controller="Checkout" asp-action="Index">Checkout</a></p>
+}
