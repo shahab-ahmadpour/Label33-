@@ -1,16 +1,25 @@
-@{
-    ViewData["Title"] = "Checkout";
-}
-<h1>Checkout</h1>
-<p>Placeholder form — final UI deferred.</p>
-<form asp-action="Place" method="post">
-    @Html.AntiForgeryToken()
-    <input name="fullName" placeholder="Full name" required />
-    <input name="phone" placeholder="Phone" required />
-    <input name="province" placeholder="Province" required />
-    <input name="city" placeholder="City" required />
-    <input name="postalCode" placeholder="Postal" required />
-    <input name="line1" placeholder="Address" required />
-    <input name="couponCode" placeholder="Coupon" />
-    <button type="submit">Pay (Mock)</button>
-</form>
+@inject Label33.Web.Localization.IBrandLocalizer L
+
+<section class="panel">
+    <h1 class="display">@L["checkout.title"]</h1>
+
+    @if (User.Identity?.IsAuthenticated != true)
+    {
+        <p>@L["checkout.loginRequired"]</p>
+        <a class="btn" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/Checkout">@L["account.login"]</a>
+    }
+    else
+    {
+        <form asp-action="Place" method="post" class="stack" style="margin-top:1.25rem;">
+            @Html.AntiForgeryToken()
+            <div class="field"><label>Full name</label><input name="fullName" required /></div>
+            <div class="field"><label>Phone</label><input name="phone" required /></div>
+            <div class="field"><label>Province</label><input name="province" required /></div>
+            <div class="field"><label>City</label><input name="city" required /></div>
+            <div class="field"><label>Postal</label><input name="postalCode" required /></div>
+            <div class="field"><label>Address</label><input name="line1" required /></div>
+            <div class="field"><label>Coupon</label><input name="couponCode" /></div>
+            <button class="btn" type="submit">@L["checkout.pay"]</button>
+        </form>
+    }
+</section>

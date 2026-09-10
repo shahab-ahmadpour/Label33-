@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Label33.Application.Catalog;
 
-public sealed record ProductListItemDto(Guid Id, string Name, string Slug, decimal? FromPrice, bool IsFeatured, string? PrimaryImage);
+public sealed record ProductListItemDto(Guid Id, string Name, string Slug, string? ShortDescription, decimal? FromPrice, bool IsFeatured, string? PrimaryImage);
 public sealed record ProductDetailDto(
     Guid Id,
     string Name,
@@ -43,6 +43,7 @@ public class ProductCatalogQuery
             p.Id,
             p.Name,
             p.Slug,
+            p.ShortDescription,
             p.Variants.Where(v => v.IsActive).Select(v => (decimal?)v.BasePrice).DefaultIfEmpty().Min(),
             p.IsFeatured,
             p.Images.OrderByDescending(i => i.IsPrimary).ThenBy(i => i.SortOrder).Select(i => i.PathOrUrl).FirstOrDefault()

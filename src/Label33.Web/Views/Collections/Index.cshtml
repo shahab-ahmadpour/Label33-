@@ -1,0 +1,44 @@
+@model IReadOnlyList<Label33.Application.Catalog.ProductListItemDto>
+@inject Label33.Web.Localization.IBrandLocalizer L
+
+<section class="container story">
+    <div class="eyebrow">33</div>
+    <h1 class="display">@L["collections.title"]</h1>
+    <p style="max-width:36rem;color:var(--muted);">Editorial drops — same clothes, different minds.</p>
+</section>
+
+<section class="hero" style="min-height:70vh;">
+    <div class="hero__visual">
+        <img src="~/brand/diyar/diyar-flight.png" alt="Campaign" />
+    </div>
+    <div class="hero__content">
+        <div class="eyebrow">Campaign</div>
+        <h2 class="display" style="font-size:clamp(2rem,5vw,3.5rem);margin:0;">Everyday Uniform</h2>
+        <p>Diyar moves through the frame. The clothes stay familiar. The mind shifts.</p>
+        <a class="btn" asp-controller="Shop" asp-action="Index">@L["hero.cta.shop"]</a>
+    </div>
+</section>
+
+<section class="container" style="padding-block:4rem;">
+    <div class="product-grid">
+        @foreach (var p in Model.Take(6))
+        {
+            <article class="product-card">
+                <a asp-controller="Products" asp-action="Details" asp-route-slug="@p.Slug">
+                    <div class="product-card__media">
+                        <img src="~/brand/diyar/diyar-profile.png" alt="@p.Name" style="object-fit:contain;padding:2rem;mix-blend-mode:multiply;" />
+                    </div>
+                </a>
+                <div class="product-card__meta" style="opacity:1;transform:none;position:relative;background:transparent;">
+                    <div>
+                        <div class="product-card__name">@p.Name</div>
+                        @if (p.FromPrice.HasValue)
+                        {
+                            <div class="product-card__price">@p.FromPrice.Value.ToString("N0") IRR</div>
+                        }
+                    </div>
+                </div>
+            </article>
+        }
+    </div>
+</section>

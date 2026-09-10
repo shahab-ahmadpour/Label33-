@@ -1,19 +1,45 @@
 @model Label33.Application.Catalog.ProductDetailDto
-@{
-    ViewData["Title"] = Model.Name;
-}
-<h1>@Model.Name</h1>
-<p>@Model.ShortDescription</p>
-<ul>
-@foreach (var v in Model.Variants)
-{
-    <li>
-        @v.Title — @v.BasePrice.ToString("N0") IRR
-        <form asp-controller="Cart" asp-action="Add" method="post" style="display:inline">
+@inject Label33.Web.Localization.IBrandLocalizer L
+
+<section class="container pdp">
+    <div class="pdp__gallery">
+        <img src="~/brand/diyar/diyar-mark.png" alt="@Model.Name" />
+    </div>
+    <div class="pdp__info">
+        <div class="eyebrow">33</div>
+        <h1 class="display">@Model.Name</h1>
+        @{
+            var price = Model.Variants.FirstOrDefault()?.BasePrice;
+        }
+        @if (price.HasValue)
+        {
+            <div class="pdp__price">@price.Value.ToString("N0") IRR</div>
+        }
+
+        <form asp-controller="Cart" asp-action="Add" method="post" class="stack">
             @Html.AntiForgeryToken()
-            <input type="hidden" name="variantId" value="@v.Id" />
-            <button type="submit">Add</button>
+            <div class="field">
+                <label>@L["product.size"]</label>
+                <select name="variantId" required>
+                    @foreach (var v in Model.Variants)
+                    {
+                        <option value="@v.Id">@v.Title — @v.BasePrice.ToString("N0")</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>@L["product.qty"]</label>
+                <input type="number" name="quantity" value="1" min="1" />
+            </div>
+            <button class="btn" type="submit">@L["product.add"]</button>
         </form>
-    </li>
-}
-</ul>
+
+        <div class="pdp__aside">
+            <p>@(Model.ShortDescription ?? Model.FullDescription)</p>
+            <p><strong>@L["product.materials"]</strong> — Cotton blend / soft handfeel</p>
+            <p><strong>@L["product.sizeGuide"]</strong> — M / L / XL</p>
+            <p><strong>@L["product.shipping"]</strong> — Iran-wide</p>
+            <img class="diyar-mark-inline" src="~/brand/diyar/diyar-icon.png" alt="Diyar" />
+        </div>
+    </div>
+</section>

@@ -1,19 +1,25 @@
 @model Label33.Domain.Entities.Cart
-@{
-    ViewData["Title"] = "Cart";
-}
-<h1>Cart</h1>
-@if (Model.Items.Count == 0)
-{
-    <p>Empty</p>
-}
-else
-{
-    <ul>
-    @foreach (var item in Model.Items)
+@inject Label33.Web.Localization.IBrandLocalizer L
+
+<section class="panel">
+    <h1 class="display">@L["cart.title"]</h1>
+    @if (Model.Items.Count == 0)
     {
-        <li>@item.ProductVariantId × @item.Quantity — @item.UnitPriceSnapshot.ToString("N0")</li>
+        <p>@L["cart.empty"]</p>
+        <a class="btn" asp-controller="Shop" asp-action="Index">@L["nav.shop"]</a>
     }
-    </ul>
-    <p><a asp-controller="Checkout" asp-action="Index">Checkout</a></p>
-}
+    else
+    {
+        @foreach (var item in Model.Items)
+        {
+            <div class="line">
+                <div>@item.ProductVariantId<br /><span style="color:var(--muted);font-size:.85rem;">× @item.Quantity</span></div>
+                <div>@((item.UnitPriceSnapshot * item.Quantity).ToString("N0")) IRR</div>
+            </div>
+        }
+        <div style="margin-top:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap;">
+            <a class="btn" asp-controller="Checkout" asp-action="Index">@L["cart.checkout"]</a>
+            <a class="btn btn--ghost" asp-controller="Shop" asp-action="Index">@L["nav.shop"]</a>
+        </div>
+    }
+</section>

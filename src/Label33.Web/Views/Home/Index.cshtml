@@ -1,26 +1,54 @@
 ﻿@model IReadOnlyList<Label33.Application.Catalog.ProductListItemDto>
+@inject Label33.Web.Localization.IBrandLocalizer L
 @{
-    ViewData["Title"] = "33 Label";
+    ViewData["Title"] = "۳۳";
 }
 
-<div class="text-center">
-    <h1 class="display-5">33 Label</h1>
-    <p class="lead">Backend scaffold is live. UI/UX will follow your design document.</p>
-</div>
+<section class="hero">
+    <div class="hero__content">
+        <div class="eyebrow">33label</div>
+        <h1 class="display">@L["hero.tagline"]</h1>
+        <p>@L["hero.support"]</p>
+        <div class="hero__cta">
+            <a class="btn" asp-controller="Shop" asp-action="Index">@L["hero.cta.shop"]</a>
+            <a class="btn btn--ghost" asp-controller="Diyar" asp-action="Index">@L["hero.cta.diyar"]</a>
+        </div>
+    </div>
+    <div class="hero__visual">
+        <img src="~/brand/diyar/diyar-mark.png" alt="Diyar" />
+    </div>
+</section>
 
-@if (Model.Count == 0)
+@if (Model.Count > 0)
 {
-    <p class="text-muted">No published products yet.</p>
-}
-else
-{
-    <ul>
-    @foreach (var p in Model)
-    {
-        <li>
-            <a href="/products/@p.Slug">@p.Name</a>
-            @if (p.FromPrice.HasValue) { <span> — @p.FromPrice.Value.ToString("N0") IRR</span> }
-        </li>
-    }
-    </ul>
+    <section class="container" style="padding-block: 4rem;">
+        <div class="eyebrow">33</div>
+        <h2 class="display" style="font-size: clamp(1.8rem, 4vw, 2.8rem); margin: 0.4rem 0 2rem;">@L["shop.title"]</h2>
+        <div class="product-grid">
+            @foreach (var p in Model)
+            {
+                <article class="product-card">
+                    <a asp-controller="Products" asp-action="Details" asp-route-slug="@p.Slug">
+                        <div class="product-card__media">
+                            <img src="~/brand/diyar/diyar-profile.png" alt="@p.Name" style="object-fit:contain;padding:2rem;mix-blend-mode:multiply;" />
+                        </div>
+                    </a>
+                    <div class="product-card__meta">
+                        <div>
+                            <div class="product-card__name">@p.Name</div>
+                            @if (p.FromPrice.HasValue)
+                            {
+                                <div class="product-card__price">@p.FromPrice.Value.ToString("N0") IRR</div>
+                            }
+                        </div>
+                        <form asp-controller="Cart" asp-action="QuickAdd" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="slug" value="@p.Slug" />
+                            <button class="btn btn--mustard" type="submit">@L["shop.quickAdd"]</button>
+                        </form>
+                    </div>
+                </article>
+            }
+        </div>
+    </section>
 }

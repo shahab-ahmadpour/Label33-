@@ -1,49 +1,84 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@using Label33.Web.Localization
+@inject IBrandLocalizer L
+<!DOCTYPE html>
+<html lang="@L.Culture" dir="@(L.IsRtl ? "rtl" : "ltr")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Label33.Web</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Label33.Web.styles.css" asp-append-version="true" />
+    <title>@(ViewData["Title"] != null ? $"{ViewData["Title"]} — " : "")۳۳</title>
+    <link rel="icon" href="~/brand/diyar/diyar-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Vazirmatn:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/brand.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Label33.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Label33.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+@if (ViewData["ShowIntro"] as bool? == true)
+{
+    <div class="intro" id="site-intro" aria-hidden="false">
+        <img class="intro__bird" src="~/brand/diyar/diyar-flight.png" alt="Diyar" />
+        <div class="intro__copy">
+            <p class="brand-num">۳۳</p>
+            <p class="tag">SAME CLOTHES.
+DIFFERENT MINDS.</p>
         </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+        <button type="button" class="intro__skip" id="intro-skip">@L["intro.skip"]</button>
+    </div>
+}
+
+<header class="site-header">
+    <div class="container nav" id="site-nav">
+        <a class="nav__brand" asp-controller="Home" asp-action="Index" aria-label="33">
+            <img src="~/brand/diyar/diyar-icon.png" alt="" />
+            <span class="nav__brand-word">۳۳</span>
+        </a>
+
+        <button class="nav__burger" id="nav-burger" type="button" aria-label="Menu"><span></span><span></span><span></span></button>
+
+        <ul class="nav__links">
+            <li><a asp-controller="Shop" asp-action="Index">@L["nav.shop"]</a></li>
+            <li><a asp-controller="Collections" asp-action="Index">@L["nav.collections"]</a></li>
+            <li><a asp-controller="About" asp-action="Index">@L["nav.about"]</a></li>
+            <li><a asp-controller="Diyar" asp-action="Index">@L["nav.diyar"]</a></li>
+        </ul>
+
+        <div class="nav__actions">
+            <a class="hide-sm" asp-controller="Shop" asp-action="Index" asp-route-q="">@L["nav.search"]</a>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="Account" asp-action="Index">@L["nav.account"]</a>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login">@L["nav.login"]</a>
+            }
+            <a asp-controller="Cart" asp-action="Index">@L["nav.cart"]</a>
+            <form asp-controller="Culture" asp-action="Set" method="post" style="display:inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="culture" value="@(L.Culture == "fa" ? "en" : "fa")" />
+                <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                <button class="lang-toggle" type="submit" aria-pressed="true">@(L.Culture == "fa" ? "EN" : "FA")</button>
+            </form>
+        </div>
+    </div>
+</header>
+
+<main>
+    @RenderBody()
+</main>
+
+<footer class="site-footer">
+    <div class="container site-footer__grid">
+        <div>
+            <strong>۳۳</strong>
+            <div>@L["footer.tag"]</div>
+        </div>
+        <div>33label</div>
+    </div>
+</footer>
+
+<script src="~/js/brand.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

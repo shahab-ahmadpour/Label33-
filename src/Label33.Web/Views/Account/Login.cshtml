@@ -1,0 +1,14 @@
+@inject Label33.Web.Localization.IBrandLocalizer L
+
+<section class="panel">
+    <h1 class="display">@L["account.login"]</h1>
+    <form asp-action="Login" method="post" class="stack" style="margin-top:1rem;">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+        <div asp-validation-summary="All"></div>
+        <div class="field"><label>@L["account.email"]</label><input type="email" name="email" required /></div>
+        <div class="field"><label>@L["account.password"]</label><input type="password" name="password" required /></div>
+        <button class="btn" type="submit">@L["account.login"]</button>
+    </form>
+    <p style="margin-top:1rem;"><a asp-action="Register">@L["account.register"]</a></p>
+</section>

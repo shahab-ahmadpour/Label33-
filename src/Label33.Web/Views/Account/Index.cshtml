@@ -1,0 +1,10 @@
+@inject Label33.Web.Localization.IBrandLocalizer L
+
+<section class="panel">
+    <h1 class="display">@L["nav.account"]</h1>
+    <p>@User.Identity?.Name</p>
+    <form asp-action="Logout" method="post">
+        @Html.AntiForgeryToken()
+        <button class="btn btn--ghost" type="submit">Logout</button>
+    </form>
+</section>
