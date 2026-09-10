@@ -261,10 +261,9 @@ button, input, select { font: inherit; color: inherit; }
   overflow: visible;
 }
 
-.diyar-svg__wing--up,
-.diyar-svg__wing--down {
+.diyar-svg__wing-pivot,
+.diyar-svg__wing {
   transform-box: fill-box;
-  transform-origin: 348px 185px;
 }
 
 .intro__copy {

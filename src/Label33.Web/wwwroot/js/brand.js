@@ -12,55 +12,55 @@
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
   }
 
-  /** Crossfade + rotate wings so flap is obviously visible. */
+  /**
+   * One wing group rotated around the shoulder.
+   * Angle goes from raised (~-42°) to lowered (~+38°) — clearly visible flap.
+   */
   function flapWings(svg, phase) {
     if (!svg) return;
-    const up = svg.querySelector('.diyar-svg__wing--up');
-    const down = svg.querySelector('.diyar-svg__wing--down');
-    if (!up || !down) return;
+    const pivot = svg.querySelector('.diyar-svg__wing-pivot');
+    if (!pivot) return;
 
-    // 0 = fully up, 1 = fully down
-    const t = (Math.sin(phase) + 1) / 2;
-    const upAngle = -38 + t * 52;
-    const downAngle = -18 + t * 48;
+    // Asymmetric flap: faster downstroke feel via skewed sine
+    const s = Math.sin(phase);
+    const angle = s * 40; // -40° (up) … +40° (down)
+    const squash = 1 - Math.abs(s) * 0.12; // foreshorten at mid-stroke
 
-    up.setAttribute('transform', `rotate(${upAngle} 348 182)`);
-    down.setAttribute('transform', `rotate(${downAngle} 348 188)`);
-    up.setAttribute('opacity', String((1 - t) * 0.92 + 0.08));
-    down.setAttribute('opacity', String(t * 0.92 + 0.08));
+    pivot.setAttribute(
+      'transform',
+      `rotate(${angle.toFixed(2)} 348 185) translate(348 185) scale(1 ${squash.toFixed(3)}) translate(-348 -185)`
+    );
   }
 
   function runIntroFlight(birdEl, onDone) {
     const svg = birdEl.querySelector('.diyar-svg');
-    const duration = 5200;
+    const duration = 5600;
     const start = performance.now();
     let phase = 0;
     let raf = 0;
     let stopped = false;
-
-    birdEl.classList.add('is-js-flight');
 
     function tick(now) {
       if (stopped) return;
       const raw = clamp((now - start) / duration, 0, 1);
       const e = easeInOutCubic(raw);
 
-      // Flap faster in the middle of the crossing
-      const flapSpeed = 0.22 + Math.sin(e * Math.PI) * 0.18;
+      // ~2.2 flaps/sec mid-flight, a bit slower at ends
+      const flapSpeed = 0.28 + Math.sin(e * Math.PI) * 0.16;
       phase += flapSpeed;
 
-      // Vertical bob locked to downstroke (lift when wings go down)
-      const downstroke = (Math.sin(phase) + 1) / 2;
-      const bob = (downstroke - 0.5) * -4.2;
+      // Lift on downstroke (positive sin = wing down)
+      const wingDown = (Math.sin(phase) + 1) / 2;
+      const bob = (wingDown - 0.5) * -5.5;
 
-      const x = -42 + e * 148; // %
-      const y = 58 - e * 38 + bob; // %
-      const tilt = -10 + e * 20 + Math.sin(phase) * 4;
-      const scale = 0.88 + Math.sin(e * Math.PI) * 0.14;
+      const x = -48 + e * 158;
+      const y = 60 - e * 40 + bob;
+      const tilt = -12 + e * 22 + Math.sin(phase) * 5;
+      const scale = 0.86 + Math.sin(e * Math.PI) * 0.16;
 
       let opacity = 1;
-      if (raw < 0.07) opacity = raw / 0.07;
-      else if (raw > 0.88) opacity = (1 - raw) / 0.12;
+      if (raw < 0.06) opacity = raw / 0.06;
+      else if (raw > 0.9) opacity = (1 - raw) / 0.1;
 
       birdEl.style.left = `${x}%`;
       birdEl.style.top = `${y}%`;
@@ -89,7 +89,7 @@
     if (!svgs.length) return;
     let phase = 0;
     function tick() {
-      phase += 0.12;
+      phase += 0.14;
       svgs.forEach((svg) => flapWings(svg, phase));
       requestAnimationFrame(tick);
     }
@@ -115,7 +115,7 @@
       if (bird) {
         stopFlight = runIntroFlight(bird, () => finishIntro(stopFlight));
       } else {
-        window.setTimeout(() => finishIntro(null), 5600);
+        window.setTimeout(() => finishIntro(null), 6000);
       }
       skip?.addEventListener('click', () => finishIntro(stopFlight));
     }

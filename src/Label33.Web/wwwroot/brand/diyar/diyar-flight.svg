@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" class="diyar-svg" fill="none" aria-hidden="true" focusable="false">
   <g class="diyar-svg__bird" fill="currentColor">
-    <path class="diyar-svg__wing diyar-svg__wing--down" d="M348 188C300 205 230 245 120 292C95 305 78 312 70 308C110 275 175 235 245 210C290 195 325 190 348 188Z"/>
-    <path class="diyar-svg__wing diyar-svg__wing--up" d="M348 178C305 145 235 95 125 40C100 25 82 18 74 24C120 70 185 120 255 155C295 170 328 176 348 178Z"/>
+    <!-- Single wing pivoted at shoulder; JS rotates this group -->
+    <g class="diyar-svg__wing-pivot" transform="rotate(0 348 185)">
+      <path class="diyar-svg__wing" d="M348 185C310 155 250 105 160 55C120 30 85 15 55 18C95 55 145 100 200 135C250 165 305 180 348 185C310 200 245 235 155 280C115 305 80 320 52 318C95 280 155 240 215 215C270 190 320 185 348 185Z"/>
+    </g>
     <path d="M320 168C350 150 395 145 445 155C490 164 525 185 545 210C520 205 490 198 460 200C430 202 400 210 375 220C355 228 340 230 328 222C318 210 314 190 320 168Z"/>
     <path d="M445 155C470 140 500 135 535 142C555 147 575 160 590 175C565 168 545 162 525 162C505 162 485 165 470 172C458 168 450 162 445 155Z"/>
     <path d="M588 172L655 188L590 186Z"/>
