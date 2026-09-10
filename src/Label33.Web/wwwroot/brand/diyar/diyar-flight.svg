@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" class="diyar-svg" fill="none" aria-hidden="true" focusable="false">
+  <g class="diyar-svg__bird" fill="currentColor">
+    <path class="diyar-svg__wing diyar-svg__wing--down" d="M330 188C290 210 220 235 150 248C200 220 250 200 295 190C310 186 322 184 330 188Z"/>
+    <path class="diyar-svg__wing diyar-svg__wing--up" d="M335 178C300 150 230 110 145 78C210 118 270 150 312 170C322 175 330 178 335 178Z"/>
+    <path d="M320 168C350 150 395 145 445 155C490 164 525 185 545 210C520 205 490 198 460 200C430 202 400 210 375 220C355 228 340 230 328 222C318 210 314 190 320 168Z"/>
+    <path d="M445 155C470 140 500 135 535 142C555 147 575 160 590 175C565 168 545 162 525 162C505 162 485 165 470 172C458 168 450 162 445 155Z"/>
+    <path d="M588 172L655 188L590 186Z"/>
+    <path d="M328 210C300 225 265 245 235 275C270 250 300 235 325 222C340 235 350 255 352 280C345 250 338 230 328 210Z"/>
+  </g>
+</svg>
