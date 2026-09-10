@@ -267,7 +267,8 @@ button, input, select { font: inherit; color: inherit; }
   height: 100%;
   object-fit: contain;
   opacity: 0;
-  transition: opacity 90ms linear;
+  /* Instant swap — crossfade stacks look like ghost birds */
+  transition: none;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
