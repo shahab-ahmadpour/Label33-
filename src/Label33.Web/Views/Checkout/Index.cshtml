@@ -13,41 +13,51 @@
     }
     else
     {
-        <form asp-action="Place" method="post" class="stack checkout-form" style="margin-top:1.25rem;">
+        <form asp-action="Place" method="post" class="stack checkout-form" id="checkout-form" style="margin-top:1.25rem;" novalidate>
             @Html.AntiForgeryToken()
             <div class="field">
                 <label for="fullName">@L["checkout.fullName"]</label>
-                <input id="fullName" name="fullName" required autocomplete="name" />
+                <input id="fullName" name="fullName" required maxlength="120" autocomplete="name" />
             </div>
             <div class="field">
                 <label for="phone">@L["checkout.phone"]</label>
-                <input id="phone" name="phone" required autocomplete="tel" />
+                <input id="phone" name="phone" type="tel" inputmode="tel" required
+                       maxlength="16" autocomplete="tel"
+                       pattern="^\+?[0-9]{1,15}$"
+                       title="فقط عدد و در صورت نیاز + در ابتدا، حداکثر ۱۵ رقم" />
             </div>
             <div class="checkout-form__row">
                 <div class="field">
                     <label for="province">@L["checkout.province"]</label>
-                    <input id="province" name="province" required />
+                    <select id="province" name="province" required>
+                        <option value="">انتخاب استان</option>
+                    </select>
                 </div>
                 <div class="field">
                     <label for="city">@L["checkout.city"]</label>
-                    <input id="city" name="city" required />
+                    <select id="city" name="city" required disabled>
+                        <option value="">ابتدا استان را انتخاب کنید</option>
+                    </select>
                 </div>
             </div>
             <div class="field">
                 <label for="postalCode">@L["checkout.postalCode"]</label>
-                <input id="postalCode" name="postalCode" required inputmode="numeric" />
+                <input id="postalCode" name="postalCode" type="text" inputmode="numeric" required
+                       maxlength="10" autocomplete="postal-code"
+                       pattern="^[0-9]{1,10}$"
+                       title="فقط عدد، حداکثر ۱۰ رقم" />
             </div>
             <div class="field">
                 <label for="line1">@L["checkout.line1"]</label>
-                <input id="line1" name="line1" required autocomplete="street-address" />
+                <input id="line1" name="line1" required maxlength="200" autocomplete="address-line1" />
             </div>
             <div class="field">
                 <label for="line2">@L["checkout.line2"]</label>
-                <input id="line2" name="line2" />
+                <input id="line2" name="line2" maxlength="200" autocomplete="address-line2" />
             </div>
             <div class="field">
                 <label for="couponCode">@L["checkout.coupon"]</label>
-                <input id="couponCode" name="couponCode" />
+                <input id="couponCode" name="couponCode" maxlength="40" autocomplete="off" />
             </div>
 
             <div class="checkout-shipping">
@@ -66,3 +76,7 @@
         </form>
     }
 </section>
+
+@section Scripts {
+    <script src="~/js/checkout.js" asp-append-version="true"></script>
+}

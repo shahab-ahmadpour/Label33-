@@ -58,7 +58,7 @@ public static class BrandText
             ["checkout.city"] = "شهر",
             ["checkout.postalCode"] = "کد پستی",
             ["checkout.line1"] = "آدرس",
-            ["checkout.line2"] = "توضیح آدرس (اختیاری)",
+            ["checkout.line2"] = "آدرس خط ۲ (اختیاری)",
             ["checkout.coupon"] = "کد تخفیف",
             ["checkout.shipping"] = "روش ارسال",
             ["checkout.shippingFlat"] = "ارسال استاندارد سراسر ایران",

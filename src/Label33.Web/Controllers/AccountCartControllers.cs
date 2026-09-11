@@ -113,12 +113,18 @@ public class CheckoutController : Controller
     private readonly CartService _carts;
     private readonly CheckoutService _checkout;
     private readonly PaymentOrchestrator _payments;
+    private readonly IWebHostEnvironment _env;
 
-    public CheckoutController(CartService carts, CheckoutService checkout, PaymentOrchestrator payments)
+    public CheckoutController(
+        CartService carts,
+        CheckoutService checkout,
+        PaymentOrchestrator payments,
+        IWebHostEnvironment env)
     {
         _carts = carts;
         _checkout = checkout;
         _payments = payments;
+        _env = env;
     }
 
     [HttpGet]
@@ -145,12 +151,46 @@ public class CheckoutController : Controller
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(fullName) ||
+                string.IsNullOrWhiteSpace(phone) ||
+                string.IsNullOrWhiteSpace(province) ||
+                string.IsNullOrWhiteSpace(city) ||
+                string.IsNullOrWhiteSpace(postalCode) ||
+                string.IsNullOrWhiteSpace(line1))
+            {
+                TempData["Error"] = "لطفاً تمام فیلدهای اجباری را پر کنید.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            phone = phone.Trim();
+            postalCode = postalCode.Trim();
+            province = province.Trim();
+            city = city.Trim();
+
+            if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^\+?[0-9]{1,15}$"))
+            {
+                TempData["Error"] = "شماره موبایل نامعتبر است (فقط عدد و در صورت نیاز +، حداکثر ۱۵ رقم).";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!System.Text.RegularExpressions.Regex.IsMatch(postalCode, @"^[0-9]{1,10}$"))
+            {
+                TempData["Error"] = "کد پستی نامعتبر است (فقط عدد، حداکثر ۱۰ رقم).";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!IranGeo.IsValidProvinceCity(_env.WebRootPath, province, city))
+            {
+                TempData["Error"] = "استان یا شهر انتخاب‌شده معتبر نیست.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var cart = await _carts.GetOrCreateAsync(userId, null, ct);
             var result = await _checkout.CheckoutAsync(
                 cart.Id,
                 userId,
-                new CheckoutAddressDto(fullName, phone, province, city, postalCode, line1, line2),
+                new CheckoutAddressDto(fullName.Trim(), phone, province, city, postalCode, line1.Trim(), string.IsNullOrWhiteSpace(line2) ? null : line2.Trim()),
                 couponCode,
                 shippingTotal: FlatShippingRials,
                 ct);
