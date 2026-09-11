@@ -1,18 +1,34 @@
 @model IReadOnlyList<Label33.Application.Catalog.ProductListItemDto>
 @inject Label33.Web.Localization.IBrandLocalizer L
+@{
+    var categories = ViewData["Categories"] as IReadOnlyList<Label33.Application.Catalog.CategoryDto>
+        ?? Array.Empty<Label33.Application.Catalog.CategoryDto>();
+    var tones = new[] { "cat-tile--ink", "cat-tile--olive", "cat-tile--tan", "cat-tile--ember" };
+}
 
 <section class="container story" style="padding-bottom:2rem;">
     <div class="eyebrow">33</div>
     <h1 class="display">@L["collections.title"]</h1>
-    <p style="max-width:36rem;color:var(--muted);">Editorial drops — same clothes, different minds.</p>
+    <p style="max-width:36rem;color:var(--muted);">@L["collections.intro"]</p>
 </section>
 
 <section class="container">
     <div class="cat-grid">
-        <a class="cat-tile cat-tile--ink" asp-controller="Shop" asp-action="Index" asp-route-category="T-SHIRTS">T-Shirts</a>
-        <a class="cat-tile cat-tile--olive" asp-controller="Shop" asp-action="Index" asp-route-category="HOODIES">Hoodies</a>
-        <a class="cat-tile cat-tile--tan" asp-controller="Shop" asp-action="Index" asp-route-category="SWEATSHIRTS">Sweatshirts</a>
-        <a class="cat-tile cat-tile--ember" asp-controller="Shop" asp-action="Index" asp-route-category="JOGGERS">Joggers</a>
+        @if (categories.Count == 0)
+        {
+            <a class="cat-tile cat-tile--ink" asp-controller="Shop" asp-action="Index" asp-route-category="T-SHIRTS">T-Shirts</a>
+            <a class="cat-tile cat-tile--olive" asp-controller="Shop" asp-action="Index" asp-route-category="HOODIES">Hoodies</a>
+            <a class="cat-tile cat-tile--tan" asp-controller="Shop" asp-action="Index" asp-route-category="SWEATSHIRTS">Sweatshirts</a>
+            <a class="cat-tile cat-tile--ember" asp-controller="Shop" asp-action="Index" asp-route-category="JOGGERS">Joggers</a>
+        }
+        else
+        {
+            @for (var i = 0; i < categories.Count; i++)
+            {
+                var c = categories[i];
+                <a class="cat-tile @tones[i % tones.Length]" asp-controller="Shop" asp-action="Index" asp-route-category="@c.Name">@c.Name</a>
+            }
+        }
     </div>
 </section>
 
@@ -23,16 +39,8 @@
     <div class="hero__content">
         <div class="eyebrow">Campaign</div>
         <h2 class="display">Everyday Uniform</h2>
-        <p>Diyar moves through the frame. The clothes stay familiar. The mind shifts.</p>
+        <p>@L["collections.campaign"]</p>
         <a class="btn btn--tan" asp-controller="Shop" asp-action="Index">@L["hero.cta.shop"]</a>
-    </div>
-</section>
-
-<section class="band band--olive">
-    <div class="container" style="display:grid;gap:.75rem;max-width:40rem;">
-        <div class="eyebrow">Palette</div>
-        <h2 class="display" style="margin:0;font-size:clamp(1.6rem,3.5vw,2.4rem);">Ink · Olive · Tan</h2>
-        <p style="margin:0;">Streetwear tones from the 33 LABEL system — dark body, olive field, tan mark.</p>
     </div>
 </section>
 

@@ -89,6 +89,7 @@ public class CollectionsController : Controller
     public async Task<IActionResult> Index(CancellationToken ct)
     {
         ViewData["Title"] = "Collections";
+        ViewData["Categories"] = await _catalog.ListActiveCategoriesAsync(ct);
         return View(await _catalog.ListPublishedAsync(ct: ct));
     }
 }
@@ -99,6 +100,37 @@ public class AboutController : Controller
     public IActionResult Index()
     {
         ViewData["Title"] = "About 33";
+        return View();
+    }
+}
+
+public class InfoController : Controller
+{
+    [HttpGet("/shipping")]
+    public IActionResult Shipping()
+    {
+        ViewData["Title"] = "Shipping";
+        return View();
+    }
+
+    [HttpGet("/returns")]
+    public IActionResult Returns()
+    {
+        ViewData["Title"] = "Returns";
+        return View();
+    }
+
+    [HttpGet("/contact")]
+    public IActionResult Contact()
+    {
+        ViewData["Title"] = "Contact";
+        return View();
+    }
+
+    [HttpGet("/privacy")]
+    public IActionResult Privacy()
+    {
+        ViewData["Title"] = "Privacy";
         return View();
     }
 }

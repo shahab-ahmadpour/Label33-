@@ -156,6 +156,13 @@ public class ProductCatalogQuery
             product.Images.OrderByDescending(i => i.IsPrimary).ThenBy(i => i.SortOrder).Select(i => i.PathOrUrl).ToList()
         );
     }
+
+    public async Task<IReadOnlyList<CategoryDto>> ListActiveCategoriesAsync(CancellationToken ct = default)
+        => await _db.Categories.AsNoTracking()
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.SortOrder).ThenBy(c => c.Name)
+            .Select(c => new CategoryDto(c.Id, c.Name, c.Slug))
+            .ToListAsync(ct);
 }
 
 public class ProductAdminService
