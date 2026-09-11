@@ -88,12 +88,15 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
         | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
 });
 
-if (!app.Environment.IsDevelopment())
+if (!app.Environment.IsDevelopment()
+    && !app.Environment.IsEnvironment("Local")
+    && !app.Environment.IsEnvironment("DockerSql"))
 {
     app.UseExceptionHandler("/Home/Error");
 }
-else
+else if (app.Environment.IsDevelopment())
 {
+    // Local/DockerSql stay on plain http for easier machine testing
     app.UseHttpsRedirection();
 }
 
