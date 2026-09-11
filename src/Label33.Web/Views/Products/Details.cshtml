@@ -1,38 +1,82 @@
 @model Label33.Application.Catalog.ProductDetailDto
-@inject Label33.Web.Localization.IBrandLocalizer L
+@inject IBrandLocalizer L
+@{
+    var images = Model.Images.Where(i => !string.IsNullOrWhiteSpace(i)).ToList();
+    if (images.Count == 0)
+        images.Add(StorefrontMedia.FallbackImage);
+
+    var inStockVariants = Model.Variants.Where(v =>
+        v.StockMode == StockMode.Unlimited || (v.Available ?? 0) > 0).ToList();
+    var allSoldOut = Model.Variants.Count > 0 && inStockVariants.Count == 0;
+    var price = inStockVariants.FirstOrDefault()?.BasePrice
+        ?? Model.Variants.FirstOrDefault()?.BasePrice;
+}
 
 <section class="container pdp">
     <div class="pdp__gallery">
-        <img src="~/brand/diyar/diyar-main.png" alt="@Model.Name" />
+        <div class="pdp__stage">
+            <img id="pdp-main-image" src="@Url.Content(StorefrontMedia.Resolve(images[0]))" alt="@Model.Name" />
+        </div>
+        @if (images.Count > 1)
+        {
+            <div class="pdp__thumbs">
+                @for (var i = 0; i < images.Count; i++)
+                {
+                    <button type="button"
+                            class="pdp__thumb @(i == 0 ? "is-active" : null)"
+                            data-pdp-thumb="@Url.Content(StorefrontMedia.Resolve(images[i]))"
+                            aria-label="@L["product.image"] @(i + 1)">
+                        <img src="@Url.Content(StorefrontMedia.Resolve(images[i]))" alt="" />
+                    </button>
+                }
+            </div>
+        }
     </div>
     <div class="pdp__info">
         <div class="eyebrow">33</div>
         <h1 class="display">@Model.Name</h1>
-        @{
-            var price = Model.Variants.FirstOrDefault()?.BasePrice;
-        }
         @if (price.HasValue)
         {
             <div class="pdp__price">@Money.FormatToman(price.Value) @Money.DisplayUnit</div>
         }
 
-        <form asp-controller="Cart" asp-action="Add" method="post" class="stack">
-            @Html.AntiForgeryToken()
-            <div class="field">
-                <label>@L["product.size"]</label>
-                <select name="variantId" required>
-                    @foreach (var v in Model.Variants)
-                    {
-                        <option value="@v.Id">@v.Title — @Money.FormatToman(v.BasePrice) @Money.DisplayUnit</option>
-                    }
-                </select>
-            </div>
-            <div class="field">
-                <label>@L["product.qty"]</label>
-                <input type="number" name="quantity" value="1" min="1" />
-            </div>
-            <button class="btn" type="submit">@L["product.add"]</button>
-        </form>
+        @if (allSoldOut)
+        {
+            <p class="pdp__soldout">@L["product.soldOut"]</p>
+        }
+        else
+        {
+            <form asp-controller="Cart" asp-action="Add" method="post" class="stack" id="pdp-add-form">
+                @Html.AntiForgeryToken()
+                <div class="field">
+                    <label>@L["product.size"]</label>
+                    <select name="variantId" id="pdp-variant" required>
+                        @foreach (var v in Model.Variants)
+                        {
+                            var soldOut = v.StockMode == StockMode.Tracked && (v.Available ?? 0) <= 0;
+                            var label = soldOut
+                                ? $"{v.Title} — {Money.FormatToman(v.BasePrice)} {Money.DisplayUnit} ({L["product.soldOut"]})"
+                                : v.Available is int avail
+                                    ? $"{v.Title} — {Money.FormatToman(v.BasePrice)} {Money.DisplayUnit} · {string.Format(L["product.available"], avail)}"
+                                    : $"{v.Title} — {Money.FormatToman(v.BasePrice)} {Money.DisplayUnit}";
+                            if (soldOut)
+                            {
+                                <option value="@v.Id" disabled data-max="0">@label</option>
+                            }
+                            else
+                            {
+                                <option value="@v.Id" data-max="@(v.Available?.ToString() ?? "")">@label</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="field">
+                    <label>@L["product.qty"]</label>
+                    <input type="number" name="quantity" id="pdp-qty" value="1" min="1" />
+                </div>
+                <button class="btn" type="submit">@L["product.add"]</button>
+            </form>
+        }
 
         <div class="pdp__aside">
             <p>@(Model.ShortDescription ?? Model.FullDescription)</p>
@@ -43,3 +87,32 @@
         </div>
     </div>
 </section>
+<script>
+(() => {
+  const main = document.getElementById('pdp-main-image');
+  document.querySelectorAll('[data-pdp-thumb]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (!main) return;
+      main.src = btn.getAttribute('data-pdp-thumb');
+      document.querySelectorAll('.pdp__thumb').forEach((el) => el.classList.remove('is-active'));
+      btn.classList.add('is-active');
+    });
+  });
+
+  const select = document.getElementById('pdp-variant');
+  const qty = document.getElementById('pdp-qty');
+  const syncMax = () => {
+    if (!select || !qty) return;
+    const opt = select.options[select.selectedIndex];
+    const max = opt?.getAttribute('data-max');
+    if (max) {
+      qty.max = max;
+      if (Number(qty.value) > Number(max)) qty.value = max;
+    } else {
+      qty.removeAttribute('max');
+    }
+  };
+  select?.addEventListener('change', syncMax);
+  syncMax();
+})();
+</script>

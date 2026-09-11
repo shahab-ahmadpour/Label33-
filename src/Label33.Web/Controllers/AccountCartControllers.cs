@@ -3,6 +3,7 @@ using Label33.Application.Catalog;
 using Label33.Application.Checkout;
 using Label33.Application.Payments;
 using Label33.Domain.Entities;
+using Label33.Domain.Enums;
 using Label33.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -27,7 +28,8 @@ public class CartController : Controller
     {
         ViewData["Title"] = "Cart";
         var cart = await GetCartAsync(ct);
-        return View(cart);
+        var view = await _carts.GetViewAsync(cart.Id, ct);
+        return View(view);
     }
 
     [HttpPost]
@@ -43,12 +45,37 @@ public class CartController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateQuantity(Guid variantId, int quantity, CancellationToken ct)
+    {
+        var cart = await GetCartAsync(ct);
+        await _carts.UpdateQuantityAsync(cart.Id, variantId, quantity, ct);
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Remove(Guid variantId, CancellationToken ct)
+    {
+        var cart = await GetCartAsync(ct);
+        await _carts.RemoveItemAsync(cart.Id, variantId, ct);
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> QuickAdd(string slug, CancellationToken ct)
     {
         var product = await _catalog.GetBySlugAsync(slug, ct);
         if (product is null) return NotFound();
-        var variant = product.Variants.FirstOrDefault();
+
+        var variant = product.Variants.FirstOrDefault(v =>
+            v.StockMode == StockMode.Unlimited || (v.Available ?? 0) > 0)
+            ?? product.Variants.FirstOrDefault();
+
         if (variant is null) return RedirectToAction("Details", "Products", new { slug });
+        if (variant.StockMode == StockMode.Tracked && (variant.Available ?? 0) <= 0)
+            return RedirectToAction("Details", "Products", new { slug });
+
         var cart = await GetCartAsync(ct);
         await _carts.AddItemAsync(cart.Id, variant.Id, 1, ct);
         return RedirectToAction(nameof(Index));

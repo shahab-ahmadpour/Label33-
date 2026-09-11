@@ -1,25 +1,68 @@
-@model Label33.Domain.Entities.Cart
-@inject Label33.Web.Localization.IBrandLocalizer L
+@model CartViewDto
+@inject IBrandLocalizer L
 
-<section class="panel">
+<section class="panel cart-panel">
     <h1 class="display">@L["cart.title"]</h1>
-    @if (Model.Items.Count == 0)
+
+    @if (Model.Lines.Count == 0)
     {
-        <p>@L["cart.empty"]</p>
+        <p class="cart-empty">@L["cart.empty"]</p>
         <a class="btn" asp-controller="Shop" asp-action="Index">@L["nav.shop"]</a>
     }
     else
     {
-        @foreach (var item in Model.Items)
-        {
-            <div class="line">
-                <div>@item.ProductVariantId<br /><span style="color:var(--muted);font-size:.85rem;">× @item.Quantity</span></div>
-                <div>@Money.FormatToman(item.UnitPriceSnapshot * item.Quantity) @Money.DisplayUnit</div>
+        <div class="cart-lines">
+            @foreach (var item in Model.Lines)
+            {
+                <article class="cart-line">
+                    <a class="cart-line__media" asp-controller="Products" asp-action="Details" asp-route-slug="@item.ProductSlug">
+                        <img src="@Url.Content(StorefrontMedia.Resolve(item.ImageUrl))" alt="@item.ProductName" />
+                    </a>
+                    <div class="cart-line__body">
+                        <div class="cart-line__top">
+                            <div>
+                                <a class="cart-line__name" asp-controller="Products" asp-action="Details" asp-route-slug="@item.ProductSlug">@item.ProductName</a>
+                                <div class="cart-line__meta">@L["cart.size"]: @item.SizeTitle</div>
+                                <div class="cart-line__meta">@L["cart.unitPrice"]: @Money.FormatToman(item.UnitPriceRials) @Money.DisplayUnit</div>
+                            </div>
+                            <div class="cart-line__total">@Money.FormatToman(item.LineTotalRials) @Money.DisplayUnit</div>
+                        </div>
+                        <div class="cart-line__actions">
+                            <div class="qty-stepper">
+                                <form asp-controller="Cart" asp-action="UpdateQuantity" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="variantId" value="@item.VariantId" />
+                                    <input type="hidden" name="quantity" value="@(item.Quantity - 1)" />
+                                    <button type="submit" class="qty-stepper__btn" aria-label="@L["cart.decrease"]" @(item.Quantity <= 1 ? "disabled" : null)>−</button>
+                                </form>
+                                <span class="qty-stepper__value">@item.Quantity</span>
+                                <form asp-controller="Cart" asp-action="UpdateQuantity" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="variantId" value="@item.VariantId" />
+                                    <input type="hidden" name="quantity" value="@(item.Quantity + 1)" />
+                                    <button type="submit" class="qty-stepper__btn" aria-label="@L["cart.increase"]">+</button>
+                                </form>
+                            </div>
+                            <form asp-controller="Cart" asp-action="Remove" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="variantId" value="@item.VariantId" />
+                                <button type="submit" class="cart-line__remove">@L["cart.remove"]</button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+
+        <div class="cart-summary">
+            <div class="cart-summary__row">
+                <span>@L["cart.subtotal"]</span>
+                <strong>@Money.FormatToman(Model.SubtotalRials) @Money.DisplayUnit</strong>
             </div>
-        }
-        <div style="margin-top:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap;">
-            <a class="btn" asp-controller="Checkout" asp-action="Index">@L["cart.checkout"]</a>
-            <a class="btn btn--ghost" asp-controller="Shop" asp-action="Index">@L["nav.shop"]</a>
+            <div class="cart-summary__actions">
+                <a class="btn" asp-controller="Checkout" asp-action="Index">@L["cart.checkout"]</a>
+                <a class="btn btn--ghost" asp-controller="Shop" asp-action="Index">@L["nav.shop"]</a>
+            </div>
         </div>
     }
 </section>

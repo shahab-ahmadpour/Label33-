@@ -66,8 +66,6 @@ public class CartService
         if (variant.Product.Status != ProductStatus.Published)
             throw new DomainException("Product is not published.");
 
-        await _inventory.EnsureAvailableAsync(variantId, quantity, ct);
-
         var cart = await _db.Carts.Include(c => c.Items).FirstOrDefaultAsync(c => c.Id == cartId, ct)
             ?? throw new DomainException("Cart not found.");
 
@@ -75,6 +73,9 @@ public class CartService
             throw new DomainException("Cart is not open.");
 
         var existing = cart.Items.FirstOrDefault(i => i.ProductVariantId == variantId);
+        var desiredQty = (existing?.Quantity ?? 0) + quantity;
+        await _inventory.EnsureAvailableAsync(variantId, desiredQty, ct);
+
         if (existing is null)
         {
             _db.CartItems.Add(new CartItem
@@ -88,7 +89,7 @@ public class CartService
         }
         else
         {
-            existing.Quantity += quantity;
+            existing.Quantity = desiredQty;
             existing.UnitPriceSnapshot = variant.BasePrice;
             existing.UpdatedAtUtc = _clock.UtcNow;
         }
@@ -96,6 +97,46 @@ public class CartService
         cart.UpdatedAtUtc = _clock.UtcNow;
         await _db.SaveChangesAsync(ct);
     }
+
+    public async Task<CartViewDto> GetViewAsync(Guid cartId, CancellationToken ct = default)
+    {
+        var cart = await _db.Carts
+            .AsNoTracking()
+            .Include(c => c.Items)
+                .ThenInclude(i => i.ProductVariant)
+                    .ThenInclude(v => v.Product)
+                        .ThenInclude(p => p.Images)
+            .FirstOrDefaultAsync(c => c.Id == cartId, ct)
+            ?? throw new DomainException("Cart not found.");
+
+        var lines = cart.Items
+            .OrderBy(i => i.AddedAtUtc)
+            .Select(i =>
+            {
+                var product = i.ProductVariant.Product;
+                var image = product.Images
+                    .OrderByDescending(img => img.IsPrimary)
+                    .ThenBy(img => img.SortOrder)
+                    .Select(img => img.PathOrUrl)
+                    .FirstOrDefault();
+
+                return new CartLineDto(
+                    i.ProductVariantId,
+                    product.Name,
+                    product.Slug,
+                    i.ProductVariant.Title,
+                    image,
+                    i.Quantity,
+                    i.UnitPriceSnapshot,
+                    i.UnitPriceSnapshot * i.Quantity);
+            })
+            .ToList();
+
+        return new CartViewDto(cart.Id, lines, lines.Sum(l => l.LineTotalRials));
+    }
+
+    public Task RemoveItemAsync(Guid cartId, Guid variantId, CancellationToken ct = default)
+        => UpdateQuantityAsync(cartId, variantId, 0, ct);
 
     public async Task UpdateQuantityAsync(Guid cartId, Guid variantId, int quantity, CancellationToken ct = default)
     {

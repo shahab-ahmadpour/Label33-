@@ -43,7 +43,7 @@
             <article class="product-card">
                 <a asp-controller="Products" asp-action="Details" asp-route-slug="@p.Slug">
                     <div class="product-card__media">
-                        <img src="~/brand/diyar/diyar-main.png" alt="@p.Name" />
+                        <img src="@Url.Content(StorefrontMedia.Resolve(p.PrimaryImage))" alt="@p.Name" class="@(string.IsNullOrWhiteSpace(p.PrimaryImage) ? "is-fallback" : "is-photo")" />
                     </div>
                 </a>
                 <div class="product-card__meta" style="opacity:1;transform:none;position:relative;background:transparent;">
