@@ -119,8 +119,10 @@
     var postalOk = postal && /^[0-9]{1,10}$/.test(postal.value);
     var provinceOk = provinceEl && provinceEl.value;
     var cityOk = cityEl && cityEl.value && !cityEl.disabled;
-    var fullNameOk = document.getElementById("fullName")?.value?.trim();
-    var line1Ok = document.getElementById("line1")?.value?.trim();
+    var fullNameEl = document.getElementById("fullName");
+    var line1El = document.getElementById("line1");
+    var fullNameOk = fullNameEl && fullNameEl.value.trim();
+    var line1Ok = line1El && line1El.value.trim();
 
     if (!fullNameOk || !phoneOk || !postalOk || !provinceOk || !cityOk || !line1Ok) {
       e.preventDefault();
