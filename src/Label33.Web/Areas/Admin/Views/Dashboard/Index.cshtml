@@ -12,6 +12,7 @@
             <div class="eyebrow">Overview</div>
             <h1>Dashboard</h1>
         </div>
+        <a class="btn btn--ghost" href="/ops-33-console/orders">Orders</a>
     </header>
 
     <div class="ops-stats">
@@ -32,6 +33,7 @@
     <div class="ops-panel">
         <div class="ops-panel__head">
             <h2>Recent orders</h2>
+            <a class="ops-link" href="/ops-33-console/orders">All orders</a>
         </div>
         @if (recent.Count == 0)
         {
@@ -46,6 +48,7 @@
                         <th>Status</th>
                         <th>Total</th>
                         <th>Created</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -56,6 +59,7 @@
                         <td>@o.Status</td>
                         <td>@o.GrandTotal.ToString("N0")</td>
                         <td>@o.CreatedAtUtc.ToString("u")</td>
+                        <td><a class="ops-link" href="/ops-33-console/orders/@o.Id">Open</a></td>
                     </tr>
                 }
                 </tbody>

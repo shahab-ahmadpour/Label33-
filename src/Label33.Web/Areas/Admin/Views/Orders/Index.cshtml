@@ -1,0 +1,68 @@
+@model IReadOnlyList<Label33.Domain.Entities.Order>
+@using Label33.Domain.Enums
+@{
+    ViewData["Title"] = "Orders";
+    var status = ViewData["Status"] as OrderStatus?;
+}
+
+<section class="ops-page">
+    <header class="ops-page__head">
+        <div>
+            <div class="eyebrow">Fulfillment</div>
+            <h1>Orders</h1>
+        </div>
+    </header>
+
+    <form method="get" class="ops-filters">
+        <label>
+            <span>Status</span>
+            <select name="status" onchange="this.form.submit()">
+                <option value="">All</option>
+                @foreach (OrderStatus s in Enum.GetValues(typeof(OrderStatus)))
+                {
+                    if (status == s)
+                    {
+                        <option value="@s" selected>@s</option>
+                    }
+                    else
+                    {
+                        <option value="@s">@s</option>
+                    }
+                }
+            </select>
+        </label>
+    </form>
+
+    <div class="ops-panel">
+        @if (Model.Count == 0)
+        {
+            <p class="ops-muted">No orders found.</p>
+        }
+        else
+        {
+            <table class="ops-table">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Created</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var o in Model)
+                {
+                    <tr>
+                        <td>@o.OrderNumber</td>
+                        <td><span class="ops-badge">@o.Status</span></td>
+                        <td>@o.GrandTotal.ToString("N0") @o.Currency</td>
+                        <td>@o.CreatedAtUtc.ToString("u")</td>
+                        <td><a class="ops-link" href="/ops-33-console/orders/@o.Id">Open</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+</section>

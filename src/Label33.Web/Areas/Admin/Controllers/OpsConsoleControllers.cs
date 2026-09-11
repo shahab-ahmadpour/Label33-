@@ -1,4 +1,6 @@
 using Label33.Application.Catalog;
+using Label33.Application.Common;
+using Label33.Application.Fulfillment;
 using Label33.Application.Orders;
 using Label33.Domain.Enums;
 using Label33.Infrastructure.Identity;
@@ -7,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Label33.Web.Areas.Admin.Controllers;
 
@@ -78,29 +81,166 @@ public class AuthController : Controller
 }
 
 [Area("Admin")]
+[Route("ops-33-console/account")]
+[Authorize(Policy = "OpsConsole")]
+public class AccountController : Controller
+{
+    private readonly UserManager<ApplicationUser> _users;
+    private readonly SignInManager<ApplicationUser> _signIn;
+
+    public AccountController(UserManager<ApplicationUser> users, SignInManager<ApplicationUser> signIn)
+    {
+        _users = users;
+        _signIn = signIn;
+    }
+
+    [HttpGet("password")]
+    public IActionResult Password() => View();
+
+    [HttpPost("password")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Password(string currentPassword, string newPassword, string confirmPassword)
+    {
+        if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+        {
+            ModelState.AddModelError(string.Empty, "Current and new password are required.");
+            return View();
+        }
+
+        if (!string.Equals(newPassword, confirmPassword, StringComparison.Ordinal))
+        {
+            ModelState.AddModelError(string.Empty, "New password confirmation does not match.");
+            return View();
+        }
+
+        var user = await _users.GetUserAsync(User);
+        if (user is null)
+            return Redirect("/ops-33-console/login");
+
+        var result = await _users.ChangePasswordAsync(user, currentPassword, newPassword);
+        if (!result.Succeeded)
+        {
+            foreach (var err in result.Errors)
+                ModelState.AddModelError(string.Empty, err.Description);
+            return View();
+        }
+
+        await _signIn.RefreshSignInAsync(user);
+        TempData["Ok"] = "Password updated.";
+        return Redirect("/ops-33-console/account/password");
+    }
+}
+
+[Area("Admin")]
 [Route("ops-33-console")]
 [Authorize(Policy = "OpsConsole")]
 public class DashboardController : Controller
 {
     private readonly OrderQueryService _orders;
-    private readonly ProductCatalogQuery _catalog;
+    private readonly ProductAdminService _products;
 
-    public DashboardController(OrderQueryService orders, ProductCatalogQuery catalog)
+    public DashboardController(OrderQueryService orders, ProductAdminService products)
     {
         _orders = orders;
-        _catalog = catalog;
+        _products = products;
     }
 
     [HttpGet("")]
     [HttpGet("dashboard")]
     public async Task<IActionResult> Index(CancellationToken ct)
     {
-        var products = await _catalog.ListPublishedAsync(ct: ct);
+        var products = await _products.ListAllAsync(ct: ct);
         var recentOrders = await _orders.ListRecentAsync(12, ct);
-        ViewData["ProductCount"] = products.Count;
+        ViewData["ProductCount"] = products.Count(p => p.Status == ProductStatus.Published);
         ViewData["OrderCount"] = recentOrders.Count;
         ViewData["RecentOrders"] = recentOrders;
         return View();
+    }
+}
+
+[Area("Admin")]
+[Route("ops-33-console/orders")]
+[Authorize(Policy = "OpsConsole")]
+public class OrdersController : Controller
+{
+    private readonly OrderQueryService _query;
+    private readonly OrderAdminService _admin;
+    private readonly FulfillmentService _fulfillment;
+
+    public OrdersController(OrderQueryService query, OrderAdminService admin, FulfillmentService fulfillment)
+    {
+        _query = query;
+        _admin = admin;
+        _fulfillment = fulfillment;
+    }
+
+    [HttpGet("")]
+    public async Task<IActionResult> Index(OrderStatus? status, CancellationToken ct)
+    {
+        var orders = await _query.ListAsync(status, 100, ct);
+        ViewData["Status"] = status;
+        return View(orders);
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> Detail(Guid id, CancellationToken ct)
+    {
+        var order = await _query.GetAsync(id, ct);
+        if (order is null) return NotFound();
+        ViewData["Allowed"] = _admin.GetAllowedTransitions(order.Status);
+        return View(order);
+    }
+
+    [HttpPost("{id:guid}/status")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangeStatus(Guid id, OrderStatus to, string? note, CancellationToken ct)
+    {
+        try
+        {
+            var actor = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : (Guid?)null;
+            await _admin.TransitionAsync(id, to, note, actor, ct);
+            TempData["Ok"] = $"Order moved to {to}.";
+        }
+        catch (Exception ex) when (ex is DomainException or InvalidOperationException)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect($"/ops-33-console/orders/{id}");
+    }
+
+    [HttpPost("shipments/{shipmentId:guid}/ship")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Ship(Guid shipmentId, Guid orderId, string? carrier, string? trackingCode, CancellationToken ct)
+    {
+        try
+        {
+            await _fulfillment.MarkShippedAsync(shipmentId, carrier, trackingCode, ct);
+            TempData["Ok"] = "Shipment marked as shipped.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect($"/ops-33-console/orders/{orderId}");
+    }
+
+    [HttpPost("shipments/{shipmentId:guid}/deliver")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Deliver(Guid shipmentId, Guid orderId, CancellationToken ct)
+    {
+        try
+        {
+            await _fulfillment.MarkDeliveredAsync(shipmentId, ct);
+            TempData["Ok"] = "Shipment marked as delivered.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect($"/ops-33-console/orders/{orderId}");
     }
 }
 
@@ -110,19 +250,15 @@ public class DashboardController : Controller
 public class ProductsController : Controller
 {
     private readonly ProductAdminService _admin;
-    private readonly ProductCatalogQuery _catalog;
 
-    public ProductsController(ProductAdminService admin, ProductCatalogQuery catalog)
-    {
-        _admin = admin;
-        _catalog = catalog;
-    }
+    public ProductsController(ProductAdminService admin) => _admin = admin;
 
     [HttpGet("")]
-    public async Task<IActionResult> Index(CancellationToken ct)
+    public async Task<IActionResult> Index(string? q, CancellationToken ct)
     {
-        var published = await _catalog.ListPublishedAsync(ct: ct);
-        return View(published);
+        var items = await _admin.ListAllAsync(q, ct);
+        ViewData["Q"] = q;
+        return View(items);
     }
 
     [HttpGet("create")]
@@ -138,15 +274,192 @@ public class ProductsController : Controller
             return View();
         }
 
-        var product = await _admin.CreateAsync(
-            name.Trim(),
-            string.IsNullOrWhiteSpace(category) ? null : category.Trim().ToUpperInvariant(),
-            ProductType.Physical,
-            [(sku.Trim().ToUpperInvariant(), "Default", price, StockMode.Tracked, Math.Max(0, stock))],
-            ct);
-        await _admin.PublishAsync(product.Id, ct);
-        TempData["Ok"] = "Product created and published.";
-        return Redirect("/ops-33-console/products");
+        try
+        {
+            var product = await _admin.CreateAsync(
+                name.Trim(),
+                string.IsNullOrWhiteSpace(category) ? null : category.Trim().ToUpperInvariant(),
+                ProductType.Physical,
+                [(sku.Trim().ToUpperInvariant(), "Default", price, StockMode.Tracked, Math.Max(0, stock))],
+                ct);
+            await _admin.PublishAsync(product.Id, ct);
+            TempData["Ok"] = "Product created and published.";
+            return Redirect($"/ops-33-console/products/{product.Id}");
+        }
+        catch (DomainException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return View();
+        }
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> Edit(Guid id, CancellationToken ct)
+    {
+        var product = await _admin.GetAdminAsync(id, ct);
+        if (product is null) return NotFound();
+        return View(product);
+    }
+
+    [HttpPost("{id:guid}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(Guid id, string name, string? shortDescription, string? fullDescription, bool isFeatured, CancellationToken ct)
+    {
+        try
+        {
+            await _admin.UpdateAsync(id, name, shortDescription, fullDescription, isFeatured, ct);
+            TempData["Ok"] = "Product saved.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect($"/ops-33-console/products/{id}");
+    }
+
+    [HttpPost("{id:guid}/publish")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Publish(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            await _admin.PublishAsync(id, ct);
+            TempData["Ok"] = "Product published.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect($"/ops-33-console/products/{id}");
+    }
+
+    [HttpPost("{id:guid}/archive")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Archive(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            await _admin.ArchiveAsync(id, ct);
+            TempData["Ok"] = "Product archived.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect($"/ops-33-console/products/{id}");
+    }
+
+    [HttpPost("{id:guid}/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            await _admin.DeleteAsync(id, ct);
+            TempData["Ok"] = "Product deleted.";
+            return Redirect("/ops-33-console/products");
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+            return Redirect($"/ops-33-console/products/{id}");
+        }
+    }
+
+    [HttpPost("variants/{variantId:guid}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateVariant(Guid variantId, Guid productId, string title, decimal price, bool isActive, CancellationToken ct)
+    {
+        try
+        {
+            await _admin.UpdateVariantAsync(variantId, title, price, isActive, ct);
+            TempData["Ok"] = "Variant updated.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect($"/ops-33-console/products/{productId}");
+    }
+
+    [HttpPost("variants/{variantId:guid}/stock")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetStock(Guid variantId, Guid productId, int quantityOnHand, CancellationToken ct)
+    {
+        try
+        {
+            await _admin.SetInventoryAsync(variantId, quantityOnHand, ct);
+            TempData["Ok"] = "Inventory updated.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect($"/ops-33-console/products/{productId}");
+    }
+
+    [HttpPost("{id:guid}/images")]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(12_000_000)]
+    public async Task<IActionResult> UploadImage(Guid id, IFormFile? file, bool makePrimary, string? altText, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+        {
+            TempData["Error"] = "Choose an image file.";
+            return Redirect($"/ops-33-console/products/{id}");
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            await _admin.AddImageAsync(id, stream, file.FileName, file.ContentType, makePrimary, altText, ct);
+            TempData["Ok"] = "Image uploaded.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect($"/ops-33-console/products/{id}");
+    }
+
+    [HttpPost("images/{imageId:guid}/primary")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetPrimaryImage(Guid imageId, Guid productId, CancellationToken ct)
+    {
+        try
+        {
+            await _admin.SetPrimaryImageAsync(imageId, ct);
+            TempData["Ok"] = "Primary image updated.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect($"/ops-33-console/products/{productId}");
+    }
+
+    [HttpPost("images/{imageId:guid}/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteImage(Guid imageId, Guid productId, CancellationToken ct)
+    {
+        try
+        {
+            await _admin.RemoveImageAsync(imageId, ct);
+            TempData["Ok"] = "Image removed.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect($"/ops-33-console/products/{productId}");
     }
 }
 
@@ -246,7 +559,6 @@ public class TeamController : Controller
             }
         }
 
-        // Strip ops roles instead of deleting identity (safer; keeps audit trail)
         if (await _users.IsInRoleAsync(user, Label33Roles.Admin))
             await _users.RemoveFromRoleAsync(user, Label33Roles.Admin);
         if (await _users.IsInRoleAsync(user, Label33Roles.SuperAdmin))

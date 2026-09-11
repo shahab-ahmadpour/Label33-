@@ -1,5 +1,6 @@
 using Label33.Application.Abstractions;
 using Label33.Domain.Entities;
+using Label33.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Label33.Application.Orders;
@@ -33,4 +34,16 @@ public class OrderQueryService
             .OrderByDescending(o => o.CreatedAtUtc)
             .Take(Math.Clamp(take, 1, 100))
             .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Order>> ListAsync(OrderStatus? status = null, int take = 100, CancellationToken ct = default)
+    {
+        var query = _db.Orders.AsNoTracking().AsQueryable();
+        if (status is not null)
+            query = query.Where(o => o.Status == status);
+
+        return await query
+            .OrderByDescending(o => o.CreatedAtUtc)
+            .Take(Math.Clamp(take, 1, 200))
+            .ToListAsync(ct);
+    }
 }

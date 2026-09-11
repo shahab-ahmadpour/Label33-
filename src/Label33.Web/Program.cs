@@ -101,6 +101,16 @@ else if (app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
+
+var storageRoot = app.Configuration["Storage:Root"]
+    ?? Path.Combine(app.Environment.ContentRootPath, "App_Data", "files");
+Directory.CreateDirectory(storageRoot);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(Path.GetFullPath(storageRoot)),
+    RequestPath = "/media"
+});
+
 app.UseRequestLocalization();
 app.UseRouting();
 app.UseAuthentication();

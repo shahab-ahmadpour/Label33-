@@ -68,6 +68,10 @@ public class FulfillmentService
         shipment.Status = ShipmentStatus.Shipped;
         shipment.ShippedAtUtc = _clock.UtcNow;
         shipment.UpdatedAtUtc = _clock.UtcNow;
+
+        if (shipment.Order.Status == OrderStatus.Fulfilling)
+            _db.OrderEvents.Add(shipment.Order.TransitionTo(OrderStatus.PartiallyFulfilled, "Shipment marked as shipped."));
+
         await _db.SaveChangesAsync(ct);
     }
 

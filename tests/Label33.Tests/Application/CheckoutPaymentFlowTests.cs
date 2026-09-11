@@ -43,13 +43,22 @@ public class CheckoutPaymentFlowTests : IAsyncLifetime
         _checkout = new CheckoutService(_db, _clock, new OrderNumberGenerator(_db), _inventory, coupons);
         var fulfillment = new FulfillmentService(_db, _clock);
         _payments = new PaymentOrchestrator(_db, new MockPaymentGateway(), _clock, _inventory, fulfillment);
-        _admin = new ProductAdminService(_db, _clock);
+        _admin = new ProductAdminService(_db, _clock, new StubFileStorage());
     }
 
     public async Task DisposeAsync()
     {
         await _db.DisposeAsync();
         await _connection.DisposeAsync();
+    }
+
+    private sealed class StubFileStorage : IFileStorage
+    {
+        public Task<string> SaveAsync(Stream content, string fileName, string contentType, CancellationToken cancellationToken = default)
+            => Task.FromResult($"test/{Guid.NewGuid():N}_{fileName}");
+
+        public Task<Stream> OpenReadAsync(string storageKey, CancellationToken cancellationToken = default)
+            => Task.FromResult<Stream>(new MemoryStream());
     }
 
     [Fact]

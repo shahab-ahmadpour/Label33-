@@ -1,0 +1,165 @@
+@model Label33.Application.Catalog.AdminProductDetailDto
+@using Label33.Domain.Enums
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<section class="ops-page">
+    <header class="ops-page__head">
+        <div>
+            <div class="eyebrow">Catalog</div>
+            <h1>@Model.Name</h1>
+            <p class="ops-muted"><span class="ops-badge">@Model.Status</span> · @Model.Slug</p>
+        </div>
+        <a class="btn btn--ghost" href="/ops-33-console/products">Back</a>
+    </header>
+
+    <div class="ops-grid-2">
+        <form method="post" action="/ops-33-console/products/@Model.Id" class="ops-form ops-panel">
+            @Html.AntiForgeryToken()
+            <div class="ops-panel__head"><h2>Details</h2></div>
+            <label>
+                <span>Name</span>
+                <input name="name" value="@Model.Name" required />
+            </label>
+            <label>
+                <span>Category / short description</span>
+                <input name="shortDescription" value="@Model.ShortDescription" />
+            </label>
+            <label>
+                <span>Full description</span>
+                <textarea name="fullDescription" rows="5">@Model.FullDescription</textarea>
+            </label>
+            <label class="ops-check">
+                <input type="checkbox" name="isFeatured" value="true" @(Model.IsFeatured ? "checked" : null) />
+                <span>Featured</span>
+            </label>
+            <button class="btn btn--tan" type="submit">Save details</button>
+        </form>
+
+        <div>
+            <div class="ops-panel">
+                <div class="ops-panel__head"><h2>Status</h2></div>
+                <div class="ops-actions">
+                    @if (Model.Status != ProductStatus.Published)
+                    {
+                        <form method="post" action="/ops-33-console/products/@Model.Id/publish">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn--tan" type="submit">Publish</button>
+                        </form>
+                    }
+                    @if (Model.Status != ProductStatus.Archived)
+                    {
+                        <form method="post" action="/ops-33-console/products/@Model.Id/archive">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn--ghost" type="submit">Archive</button>
+                        </form>
+                    }
+                    @if (Model.Status != ProductStatus.Published)
+                    {
+                        <form method="post" action="/ops-33-console/products/@Model.Id/delete" onsubmit="return confirm('Delete this product permanently?');">
+                            @Html.AntiForgeryToken()
+                            <button class="ops-link-danger" type="submit">Delete</button>
+                        </form>
+                    }
+                </div>
+                <p class="ops-muted">Published products with order history cannot be hard-deleted — archive them.</p>
+            </div>
+
+            <div class="ops-panel" style="margin-top:1rem">
+                <div class="ops-panel__head"><h2>Images</h2></div>
+                <div class="ops-image-grid">
+                    @foreach (var img in Model.Images)
+                    {
+                        <figure class="ops-image-card">
+                            <img src="@img.PathOrUrl" alt="@(img.AltText ?? "")" />
+                            <figcaption>
+                                @if (img.IsPrimary)
+                                {
+                                    <span class="ops-badge">Primary</span>
+                                }
+                                else
+                                {
+                                    <form method="post" action="/ops-33-console/products/images/@img.Id/primary">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="productId" value="@Model.Id" />
+                                        <button type="submit" class="ops-link">Make primary</button>
+                                    </form>
+                                }
+                                <form method="post" action="/ops-33-console/products/images/@img.Id/delete" onsubmit="return confirm('Remove image?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="productId" value="@Model.Id" />
+                                    <button type="submit" class="ops-link-danger">Remove</button>
+                                </form>
+                            </figcaption>
+                        </figure>
+                    }
+                </div>
+                <form method="post" action="/ops-33-console/products/@Model.Id/images" enctype="multipart/form-data" class="ops-form" style="margin-top:1rem">
+                    @Html.AntiForgeryToken()
+                    <label>
+                        <span>Upload image</span>
+                        <input type="file" name="file" accept="image/jpeg,image/png,image/webp,image/gif" required />
+                    </label>
+                    <label>
+                        <span>Alt text</span>
+                        <input name="altText" />
+                    </label>
+                    <label class="ops-check">
+                        <input type="checkbox" name="makePrimary" value="true" />
+                        <span>Set as primary</span>
+                    </label>
+                    <button class="btn btn--tan" type="submit">Upload</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="ops-panel" style="margin-top:1rem">
+        <div class="ops-panel__head"><h2>Variants & inventory</h2></div>
+        @foreach (var v in Model.Variants)
+        {
+            <div class="ops-variant-card">
+                <div class="ops-panel__head">
+                    <h2>@v.Sku</h2>
+                    <span class="ops-badge">@(v.IsActive ? "Active" : "Inactive")</span>
+                </div>
+                <form method="post" action="/ops-33-console/products/variants/@v.Id" class="ops-form ops-form__row">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="productId" value="@Model.Id" />
+                    <label>
+                        <span>Title</span>
+                        <input name="title" value="@v.Title" required />
+                    </label>
+                    <label>
+                        <span>Price (IRR)</span>
+                        <input name="price" type="number" min="0" step="1000" value="@v.BasePrice" required />
+                    </label>
+                    <label class="ops-check">
+                        <input type="checkbox" name="isActive" value="true" @(v.IsActive ? "checked" : null) />
+                        <span>Active</span>
+                    </label>
+                    <button class="btn btn--ghost" type="submit">Save variant</button>
+                </form>
+
+                @if (v.StockMode == StockMode.Tracked)
+                {
+                    <form method="post" action="/ops-33-console/products/variants/@v.Id/stock" class="ops-form ops-form__row" style="margin-top:0.75rem">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@Model.Id" />
+                        <label>
+                            <span>On hand</span>
+                            <input name="quantityOnHand" type="number" min="0" value="@v.QuantityOnHand" required />
+                        </label>
+                        <p class="ops-muted">Reserved: @v.QuantityReserved · Available: @v.Available</p>
+                        <button class="btn btn--tan" type="submit">Update stock</button>
+                    </form>
+                }
+                else
+                {
+                    <p class="ops-muted">Unlimited stock mode.</p>
+                }
+            </div>
+        }
+    </div>
+</section>

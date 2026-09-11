@@ -1,0 +1,176 @@
+@model Label33.Domain.Entities.Order
+@using Label33.Domain.Enums
+@{
+    ViewData["Title"] = Model.OrderNumber;
+    var allowed = ViewData["Allowed"] as IReadOnlyCollection<OrderStatus> ?? Array.Empty<OrderStatus>();
+}
+
+<section class="ops-page">
+    <header class="ops-page__head">
+        <div>
+            <div class="eyebrow">Order</div>
+            <h1>@Model.OrderNumber</h1>
+            <p class="ops-muted"><span class="ops-badge">@Model.Status</span> · @Model.GrandTotal.ToString("N0") @Model.Currency</p>
+        </div>
+        <a class="btn btn--ghost" href="/ops-33-console/orders">Back</a>
+    </header>
+
+    <div class="ops-grid-2">
+        <div class="ops-panel">
+            <div class="ops-panel__head"><h2>Items</h2></div>
+            <table class="ops-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Qty</th>
+                        <th>Line</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.ProductNameSnapshot<br /><span class="ops-muted">@item.VariantTitleSnapshot</span></td>
+                        <td>@item.SkuSnapshot</td>
+                        <td>@item.Quantity</td>
+                        <td>@item.LineTotal.ToString("N0")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+
+            @if (Model.ShippingAddress is not null)
+            {
+                var a = Model.ShippingAddress;
+                <div class="ops-panel__head" style="margin-top:1.25rem"><h2>Shipping address</h2></div>
+                <p>
+                    @a.FullName<br />
+                    @a.Phone<br />
+                    @a.Line1 @(string.IsNullOrWhiteSpace(a.Line2) ? "" : "· " + a.Line2)<br />
+                    @a.City, @a.Province @a.PostalCode
+                </p>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.CustomerNote))
+            {
+                <div class="ops-panel__head"><h2>Customer note</h2></div>
+                <p>@Model.CustomerNote</p>
+            }
+        </div>
+
+        <div>
+            <div class="ops-panel">
+                <div class="ops-panel__head"><h2>Change status</h2></div>
+                @if (allowed.Count == 0)
+                {
+                    <p class="ops-muted">No further transitions from @Model.Status.</p>
+                }
+                else
+                {
+                    <form method="post" action="/ops-33-console/orders/@Model.Id/status" class="ops-form">
+                        @Html.AntiForgeryToken()
+                        <label>
+                            <span>New status</span>
+                            <select name="to">
+                                @foreach (var s in allowed)
+                                {
+                                    <option value="@s">@s</option>
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            <span>Note</span>
+                            <input name="note" placeholder="Optional note" />
+                        </label>
+                        <button class="btn btn--tan" type="submit">Update status</button>
+                    </form>
+                }
+            </div>
+
+            <div class="ops-panel" style="margin-top:1rem">
+                <div class="ops-panel__head"><h2>Shipments</h2></div>
+                @if (Model.Shipments.Count == 0)
+                {
+                    <p class="ops-muted">No shipments yet.</p>
+                }
+                else
+                {
+                    @foreach (var ship in Model.Shipments.OrderBy(s => s.CreatedAtUtc))
+                    {
+                        <div class="ops-ship-card">
+                            <div><span class="ops-badge">@ship.Status</span></div>
+                            <p class="ops-muted">
+                                Carrier: @(ship.Carrier ?? "—") · Tracking: @(ship.TrackingCode ?? "—")
+                            </p>
+                            @if (ship.Status == ShipmentStatus.Preparing)
+                            {
+                                <form method="post" action="/ops-33-console/orders/shipments/@ship.Id/ship" class="ops-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="orderId" value="@Model.Id" />
+                                    <label><span>Carrier</span><input name="carrier" placeholder="Post / Tipax / …" /></label>
+                                    <label><span>Tracking</span><input name="trackingCode" /></label>
+                                    <button class="btn btn--tan" type="submit">Mark shipped</button>
+                                </form>
+                            }
+                            else if (ship.Status == ShipmentStatus.Shipped)
+                            {
+                                <form method="post" action="/ops-33-console/orders/shipments/@ship.Id/deliver">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="orderId" value="@Model.Id" />
+                                    <button class="btn btn--tan" type="submit">Mark delivered</button>
+                                </form>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="ops-panel" style="margin-top:1rem">
+        <div class="ops-panel__head"><h2>Timeline</h2></div>
+        @if (Model.Events.Count == 0)
+        {
+            <p class="ops-muted">No events.</p>
+        }
+        else
+        {
+            <table class="ops-table">
+                <thead><tr><th>When</th><th>From</th><th>To</th><th>Message</th></tr></thead>
+                <tbody>
+                @foreach (var e in Model.Events.OrderByDescending(x => x.CreatedAtUtc))
+                {
+                    <tr>
+                        <td>@e.CreatedAtUtc.ToString("u")</td>
+                        <td>@(e.FromStatus?.ToString() ?? "—")</td>
+                        <td>@e.ToStatus</td>
+                        <td>@e.Message</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    @if (Model.Payments.Count > 0)
+    {
+        <div class="ops-panel" style="margin-top:1rem">
+            <div class="ops-panel__head"><h2>Payments</h2></div>
+            <table class="ops-table">
+                <thead><tr><th>Provider</th><th>Ref</th><th>Amount</th><th>Status</th></tr></thead>
+                <tbody>
+                @foreach (var p in Model.Payments)
+                {
+                    <tr>
+                        <td>@p.Provider</td>
+                        <td>@(p.ProviderRef ?? "—")</td>
+                        <td>@p.Amount.ToString("N0")</td>
+                        <td>@p.Status</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
