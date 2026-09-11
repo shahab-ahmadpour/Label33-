@@ -30,15 +30,15 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddLocalization();
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
-    var supported = new[] { new CultureInfo("fa"), new CultureInfo("en") };
-    options.DefaultRequestCulture = new RequestCulture("fa");
+    var supported = new[] { new CultureInfo("en"), new CultureInfo("fa") };
+    options.DefaultRequestCulture = new RequestCulture("en");
     options.SupportedCultures = supported;
     options.SupportedUICultures = supported;
     options.RequestCultureProviders = new List<IRequestCultureProvider>
     {
         new CookieRequestCultureProvider { CookieName = "label33.culture" },
-        new QueryStringRequestCultureProvider(),
-        new AcceptLanguageHeaderRequestCultureProvider()
+        new QueryStringRequestCultureProvider()
+        // No Accept-Language fallback — site launches in English by default
     };
 });
 

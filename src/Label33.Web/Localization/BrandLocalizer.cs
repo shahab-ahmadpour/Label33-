@@ -21,7 +21,7 @@ public sealed class BrandLocalizer : IBrandLocalizer
         get
         {
             var feature = _http.HttpContext?.Features.Get<IRequestCultureFeature>();
-            var name = feature?.RequestCulture.UICulture.TwoLetterISOLanguageName ?? "fa";
+            var name = feature?.RequestCulture.UICulture.TwoLetterISOLanguageName ?? "en";
             return name.StartsWith("en", StringComparison.OrdinalIgnoreCase) ? "en" : "fa";
         }
     }
