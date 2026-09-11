@@ -234,8 +234,10 @@ public class DigitalEntitlementConfiguration : IEntityTypeConfiguration<DigitalE
     public void Configure(EntityTypeBuilder<DigitalEntitlement> b)
     {
         b.HasIndex(x => x.OrderItemId).IsUnique();
-        b.HasOne(x => x.OrderItem).WithOne(x => x.DigitalEntitlement).HasForeignKey<DigitalEntitlement>(x => x.OrderItemId);
-        b.HasOne(x => x.DigitalAsset).WithMany().HasForeignKey(x => x.DigitalAssetId);
+        b.HasOne(x => x.OrderItem).WithOne(x => x.DigitalEntitlement).HasForeignKey<DigitalEntitlement>(x => x.OrderItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+        b.HasOne(x => x.DigitalAsset).WithMany().HasForeignKey(x => x.DigitalAssetId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 
@@ -299,8 +301,11 @@ public class VariantAttributeValueConfiguration : IEntityTypeConfiguration<Varia
     public void Configure(EntityTypeBuilder<VariantAttributeValue> b)
     {
         b.HasIndex(x => new { x.ProductVariantId, x.ProductAttributeValueId }).IsUnique();
-        b.HasOne(x => x.ProductVariant).WithMany(x => x.AttributeValues).HasForeignKey(x => x.ProductVariantId);
-        b.HasOne(x => x.ProductAttributeValue).WithMany(x => x.VariantLinks).HasForeignKey(x => x.ProductAttributeValueId);
+        // Both default Cascade would diamond from Product → Variants and Product → Attributes (SQL Server rejects).
+        b.HasOne(x => x.ProductVariant).WithMany(x => x.AttributeValues).HasForeignKey(x => x.ProductVariantId)
+            .OnDelete(DeleteBehavior.Cascade);
+        b.HasOne(x => x.ProductAttributeValue).WithMany(x => x.VariantLinks).HasForeignKey(x => x.ProductAttributeValueId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 
@@ -308,8 +313,11 @@ public class CouponRedemptionConfiguration : IEntityTypeConfiguration<CouponRede
 {
     public void Configure(EntityTypeBuilder<CouponRedemption> b)
     {
-        b.HasOne(x => x.Coupon).WithMany(x => x.Redemptions).HasForeignKey(x => x.CouponId);
-        b.HasOne(x => x.Order).WithMany().HasForeignKey(x => x.OrderId);
+        // Order.CouponId uses SetNull; dual Cascade here creates multiple paths on SQL Server.
+        b.HasOne(x => x.Coupon).WithMany(x => x.Redemptions).HasForeignKey(x => x.CouponId)
+            .OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(x => x.Order).WithMany().HasForeignKey(x => x.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
         b.HasIndex(x => new { x.CouponId, x.OrderId }).IsUnique();
     }
 }

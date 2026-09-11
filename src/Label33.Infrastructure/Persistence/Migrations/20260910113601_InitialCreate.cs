@@ -679,7 +679,7 @@ namespace Label33.Infrastructure.Persistence.Migrations
                         column: x => x.CouponId,
                         principalTable: "Coupons",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_CouponRedemptions_Orders_OrderId",
                         column: x => x.OrderId,
@@ -1001,7 +1001,7 @@ namespace Label33.Infrastructure.Persistence.Migrations
                         column: x => x.ProductAttributeValueId,
                         principalTable: "ProductAttributeValues",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_VariantAttributeValues_ProductVariants_ProductVariantId",
                         column: x => x.ProductVariantId,
@@ -1032,7 +1032,7 @@ namespace Label33.Infrastructure.Persistence.Migrations
                         column: x => x.DigitalAssetId,
                         principalTable: "DigitalAssets",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_DigitalEntitlements_OrderItems_OrderItemId",
                         column: x => x.OrderItemId,

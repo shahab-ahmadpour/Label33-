@@ -1730,7 +1730,7 @@ namespace Label33.Infrastructure.Persistence.Migrations
                     b.HasOne("Label33.Domain.Entities.Coupon", "Coupon")
                         .WithMany("Redemptions")
                         .HasForeignKey("CouponId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Label33.Domain.Entities.Order", "Order")
@@ -1749,7 +1749,7 @@ namespace Label33.Infrastructure.Persistence.Migrations
                     b.HasOne("Label33.Domain.Entities.DigitalAsset", "DigitalAsset")
                         .WithMany()
                         .HasForeignKey("DigitalAssetId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Label33.Domain.Entities.OrderItem", "OrderItem")
@@ -2009,7 +2009,7 @@ namespace Label33.Infrastructure.Persistence.Migrations
                     b.HasOne("Label33.Domain.Entities.ProductAttributeValue", "ProductAttributeValue")
                         .WithMany("VariantLinks")
                         .HasForeignKey("ProductAttributeValueId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Label33.Domain.Entities.ProductVariant", "ProductVariant")
