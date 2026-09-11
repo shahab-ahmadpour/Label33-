@@ -15,7 +15,8 @@
 param(
     [ValidateSet('LocalDb', 'DockerSql', 'Sqlite')]
     [string]$Mode = 'LocalDb',
-    [string]$Urls = 'http://localhost:5072'
+    [string]$Urls = 'http://localhost:5072',
+    [switch]$ResetDb
 )
 
 $ErrorActionPreference = 'Stop'
@@ -26,17 +27,19 @@ Write-Host "==> Restoring..." -ForegroundColor Cyan
 dotnet restore Label33.sln | Out-Host
 
 function Ensure-DotnetEf {
-    $ef = Get-Command dotnet-ef -ErrorAction SilentlyContinue
-    if ($ef) { return }
+    if (Get-Command dotnet-ef -ErrorAction SilentlyContinue) { return }
+
     Write-Host "==> Installing dotnet-ef tool..." -ForegroundColor Cyan
     dotnet tool install -g dotnet-ef --version 8.0.11
     if ($LASTEXITCODE -ne 0) {
         dotnet tool update -g dotnet-ef --version 8.0.11
     }
-    $tools = Join-Path $env:USERPROFILE ".dotnet\tools"
+
+    $tools = Join-Path $env:USERPROFILE '.dotnet\tools'
     if ($env:PATH -notlike "*$tools*") {
         $env:PATH = "$tools;$env:PATH"
     }
+
     if (-not (Get-Command dotnet-ef -ErrorAction SilentlyContinue)) {
         throw "dotnet-ef still not found. Close PowerShell, reopen, then run: dotnet tool install -g dotnet-ef --version 8.0.11"
     }
@@ -47,6 +50,12 @@ switch ($Mode) {
         $env:ASPNETCORE_ENVIRONMENT = 'Local'
         Write-Host "==> Mode: LocalDB + EF migrations" -ForegroundColor Cyan
         Ensure-DotnetEf
+        if ($ResetDb) {
+            Write-Host "==> Dropping existing database..." -ForegroundColor Yellow
+            dotnet ef database drop --force `
+                --project src/Label33.Infrastructure `
+                --startup-project src/Label33.Web
+        }
         Write-Host "==> Applying migrations..." -ForegroundColor Cyan
         dotnet ef database update `
             --project src/Label33.Infrastructure `
@@ -54,8 +63,12 @@ switch ($Mode) {
         if ($LASTEXITCODE -ne 0) {
             throw @"
 Migration failed.
-1) Confirm LocalDB: sqllocaldb start MSSQLLocalDB
-2) Confirm EF tool: dotnet ef --version
+If a previous attempt left a half-created DB, re-run with:
+  .\scripts\run-local.ps1 -ResetDb
+Or manually:
+  `$env:ASPNETCORE_ENVIRONMENT='Local'
+  dotnet ef database drop --force --project src/Label33.Infrastructure --startup-project src/Label33.Web
+Also check LocalDB: sqllocaldb start MSSQLLocalDB
 "@
         }
     }
@@ -95,4 +108,5 @@ Write-Host "Ops Console: $Urls/ops-33-console/login" -ForegroundColor Green
 Write-Host "SuperAdmin:  superadmin@33label.local / ChangeMe_33Label!" -ForegroundColor Green
 Write-Host ""
 Write-Host "==> Running web app..." -ForegroundColor Cyan
-dotnet run --project src/Label33.Web --launch-profile $(if ($Mode -eq 'Sqlite') { 'http' } elseif ($Mode -eq 'DockerSql') { 'DockerSql' } else { 'Local' }) --urls $Urls
+$profileName = if ($Mode -eq 'Sqlite') { 'http' } elseif ($Mode -eq 'DockerSql') { 'DockerSql' } else { 'Local' }
+dotnet run --project src/Label33.Web --launch-profile $profileName --urls $Urls

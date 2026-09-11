@@ -974,7 +974,7 @@ namespace Label33.Infrastructure.Persistence.Migrations
                         column: x => x.VariantId,
                         principalTable: "ProductVariants",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ProductImages_Products_ProductId",
                         column: x => x.ProductId,

@@ -1916,7 +1916,7 @@ namespace Label33.Infrastructure.Persistence.Migrations
                     b.HasOne("Label33.Domain.Entities.ProductVariant", "Variant")
                         .WithMany("Images")
                         .HasForeignKey("VariantId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Product");
 

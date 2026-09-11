@@ -59,8 +59,9 @@ public class ProductImageConfiguration : IEntityTypeConfiguration<ProductImage>
     public void Configure(EntityTypeBuilder<ProductImage> b)
     {
         b.Property(x => x.PathOrUrl).HasMaxLength(1000).IsRequired();
+        // Product cascade + Variant SetNull creates multiple cascade paths on SQL Server.
         b.HasOne(x => x.Product).WithMany(x => x.Images).HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
-        b.HasOne(x => x.Variant).WithMany(x => x.Images).HasForeignKey(x => x.VariantId).OnDelete(DeleteBehavior.SetNull);
+        b.HasOne(x => x.Variant).WithMany(x => x.Images).HasForeignKey(x => x.VariantId).OnDelete(DeleteBehavior.Restrict);
     }
 }
 
