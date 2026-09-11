@@ -304,15 +304,33 @@ public class ProductsController : Controller
             return View();
         }
 
+        if (price < 0)
+        {
+            ModelState.AddModelError(string.Empty, "Default price (Toman) must be zero or greater.");
+            return View();
+        }
+
+        var defaultPriceRials = Money.ToRials(price);
         var sizes = new List<SizeStockInput>();
         foreach (var code in sizeCodes ?? Array.Empty<string>())
         {
-            var key = $"stock_{code}";
             var stock = 0;
-            if (form.ContainsKey(key))
-                _ = int.TryParse(form[key], out stock);
-            sizes.Add(new SizeStockInput(code, Math.Max(0, stock), price));
+            _ = int.TryParse(form[$"stock_{code}"], out stock);
+
+            var sizePriceToman = price;
+            if (decimal.TryParse(form[$"price_{code}"], out var parsedSizePrice) && parsedSizePrice >= 0)
+                sizePriceToman = parsedSizePrice;
+
+            sizes.Add(new SizeStockInput(code, Math.Max(0, stock), Money.ToRials(sizePriceToman)));
         }
+
+        if (sizes.Count == 0)
+        {
+            ModelState.AddModelError(string.Empty, "Enable at least one size.");
+            return View();
+        }
+
+        var basePriceRials = sizes.Min(s => s.Price ?? defaultPriceRials);
 
         try
         {
@@ -324,7 +342,7 @@ public class ProductsController : Controller
                 isFeatured,
                 ProductType.Physical,
                 skuPrefix,
-                price,
+                basePriceRials,
                 sizes,
                 publish,
                 ct);
@@ -392,18 +410,30 @@ public class ProductsController : Controller
         IFormCollection form,
         CancellationToken ct)
     {
+        if (price < 0)
+        {
+            TempData["Error"] = "Default price (Toman) must be zero or greater.";
+            return Redirect($"/ops-33-console/products/{id}");
+        }
+
+        var defaultPriceRials = Money.ToRials(price);
         var sizes = new List<SizeStockInput>();
         foreach (var code in CatalogDefaults.Sizes)
         {
             var enabled = sizeCodes?.Contains(code, StringComparer.OrdinalIgnoreCase) == true;
             var stock = 0;
             _ = int.TryParse(form[$"stock_{code}"], out stock);
-            sizes.Add(new SizeStockInput(code, Math.Max(0, stock), price, enabled));
+
+            var sizePriceToman = price;
+            if (decimal.TryParse(form[$"price_{code}"], out var parsedSizePrice) && parsedSizePrice >= 0)
+                sizePriceToman = parsedSizePrice;
+
+            sizes.Add(new SizeStockInput(code, Math.Max(0, stock), Money.ToRials(sizePriceToman), enabled));
         }
 
         try
         {
-            await _admin.SyncSizeMatrixAsync(id, price, sizes, ct);
+            await _admin.SyncSizeMatrixAsync(id, defaultPriceRials, sizes, ct);
             TempData["Ok"] = "Sizes and inventory saved.";
         }
         catch (DomainException ex)

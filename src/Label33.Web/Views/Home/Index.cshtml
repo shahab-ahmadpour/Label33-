@@ -49,7 +49,7 @@
                             <div class="product-card__name">@p.Name</div>
                             @if (p.FromPrice.HasValue)
                             {
-                                <div class="product-card__price">@p.FromPrice.Value.ToString("N0") IRR</div>
+                                <div class="product-card__price">@Money.FormatToman(p.FromPrice.Value) @Money.DisplayUnit</div>
                             }
                         </div>
                         <form asp-controller="Cart" asp-action="QuickAdd" method="post">

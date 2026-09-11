@@ -56,7 +56,7 @@
                     <tr>
                         <td>@o.OrderNumber</td>
                         <td><span class="ops-badge">@o.Status</span></td>
-                        <td>@o.GrandTotal.ToString("N0") @o.Currency</td>
+                        <td>@Money.FormatToman(o.GrandTotal) @Money.DisplayUnit</td>
                         <td>@o.CreatedAtUtc.ToString("u")</td>
                         <td><a class="ops-link" href="/ops-33-console/orders/@o.Id">Open</a></td>
                     </tr>

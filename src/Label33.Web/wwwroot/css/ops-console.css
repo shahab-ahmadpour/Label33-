@@ -210,6 +210,10 @@
   background: #0f0f0f;
   color: #f2f2f2;
   padding: 0.8rem 0.85rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .ops-form__row {
@@ -309,6 +313,10 @@
   background: #0f0f0f;
   color: #f2f2f2;
   padding: 0.8rem 0.85rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .ops-form textarea {
@@ -397,9 +405,29 @@
   flex-wrap: wrap;
 }
 
+.ops-filters__actions {
+  display: flex;
+  align-items: end;
+  padding-bottom: 1px;
+}
+
+.ops-body .btn--outline {
+  background: transparent;
+  border: 1px solid #c7b597;
+  color: #c7b597;
+  padding: 0.8rem 1.35rem;
+  min-height: 2.85rem;
+}
+
+.ops-body .btn--outline:hover {
+  background: rgba(199, 181, 151, 0.12);
+  color: #e8dcc8;
+  transform: none;
+}
+
 .ops-size-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
   gap: 0.75rem;
 }
 
@@ -409,6 +437,27 @@
   padding: 0.85rem;
   display: grid;
   gap: 0.55rem;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.ops-size-card label {
+  min-width: 0;
+}
+
+.ops-size-card__head {
+  margin: 0;
+}
+
+.ops-size-card__input,
+.ops-size-card input[type="number"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0.55rem 0.5rem;
+  font-size: 0.9rem;
 }
 
 .ops-row--warn td { background: rgba(199, 181, 151, 0.06); }
@@ -448,6 +497,10 @@
   z-index: 40;
   display: grid;
   gap: 0.15rem;
+}
+
+.ops-user-menu__panel[hidden] {
+  display: none !important;
 }
 
 .ops-user-menu__panel a,

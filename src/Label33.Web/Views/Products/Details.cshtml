@@ -13,7 +13,7 @@
         }
         @if (price.HasValue)
         {
-            <div class="pdp__price">@price.Value.ToString("N0") IRR</div>
+            <div class="pdp__price">@Money.FormatToman(price.Value) @Money.DisplayUnit</div>
         }
 
         <form asp-controller="Cart" asp-action="Add" method="post" class="stack">
@@ -23,7 +23,7 @@
                 <select name="variantId" required>
                     @foreach (var v in Model.Variants)
                     {
-                        <option value="@v.Id">@v.Title — @v.BasePrice.ToString("N0")</option>
+                        <option value="@v.Id">@v.Title — @Money.FormatToman(v.BasePrice) @Money.DisplayUnit</option>
                     }
                 </select>
             </div>

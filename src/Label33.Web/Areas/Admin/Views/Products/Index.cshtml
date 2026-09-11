@@ -1,5 +1,6 @@
 @model IReadOnlyList<Label33.Application.Catalog.AdminProductListItemDto>
 @using Label33.Application.Catalog
+@using Label33.Application.Common
 @using Label33.Domain.Enums
 @{
     ViewData["Title"] = "Products";
@@ -9,8 +10,6 @@
     var sort = ViewData["Sort"] as AdminProductSort? ?? AdminProductSort.UpdatedDesc;
     var categories = ViewData["Categories"] as IReadOnlyList<CategoryDto> ?? Array.Empty<CategoryDto>();
     var stats = ViewData["Stats"] as WarehouseStatsDto;
-
-    string Sel(bool on) => on ? "selected" : null!;
 }
 
 <section class="ops-page">
@@ -45,7 +44,14 @@
                 <option value="">All categories</option>
                 @foreach (var c in categories)
                 {
-                    <option value="@c.Id" selected="@Sel(categoryId == c.Id)">@c.Name</option>
+                    if (categoryId == c.Id)
+                    {
+                        <option value="@c.Id" selected>@c.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
                 }
             </select>
         </label>
@@ -55,23 +61,32 @@
                 <option value="">All</option>
                 @foreach (ProductStatus s in Enum.GetValues(typeof(ProductStatus)))
                 {
-                    <option value="@s" selected="@Sel(status == s)">@s</option>
+                    if (status == s)
+                    {
+                        <option value="@s" selected>@s</option>
+                    }
+                    else
+                    {
+                        <option value="@s">@s</option>
+                    }
                 }
             </select>
         </label>
         <label>
             <span>Sort</span>
             <select name="sort">
-                <option value="@AdminProductSort.UpdatedDesc" selected="@Sel(sort == AdminProductSort.UpdatedDesc)">Updated · newest</option>
-                <option value="@AdminProductSort.UpdatedAsc" selected="@Sel(sort == AdminProductSort.UpdatedAsc)">Updated · oldest</option>
-                <option value="@AdminProductSort.PriceAsc" selected="@Sel(sort == AdminProductSort.PriceAsc)">Price · low to high</option>
-                <option value="@AdminProductSort.PriceDesc" selected="@Sel(sort == AdminProductSort.PriceDesc)">Price · high to low</option>
-                <option value="@AdminProductSort.StockDesc" selected="@Sel(sort == AdminProductSort.StockDesc)">Stock · highest</option>
-                <option value="@AdminProductSort.StockAsc" selected="@Sel(sort == AdminProductSort.StockAsc)">Stock · lowest</option>
-                <option value="@AdminProductSort.NameAsc" selected="@Sel(sort == AdminProductSort.NameAsc)">Name · A–Z</option>
+                @if (sort == AdminProductSort.UpdatedDesc) { <option value="@AdminProductSort.UpdatedDesc" selected>Updated · newest</option> } else { <option value="@AdminProductSort.UpdatedDesc">Updated · newest</option> }
+                @if (sort == AdminProductSort.UpdatedAsc) { <option value="@AdminProductSort.UpdatedAsc" selected>Updated · oldest</option> } else { <option value="@AdminProductSort.UpdatedAsc">Updated · oldest</option> }
+                @if (sort == AdminProductSort.PriceAsc) { <option value="@AdminProductSort.PriceAsc" selected>Price · low to high</option> } else { <option value="@AdminProductSort.PriceAsc">Price · low to high</option> }
+                @if (sort == AdminProductSort.PriceDesc) { <option value="@AdminProductSort.PriceDesc" selected>Price · high to low</option> } else { <option value="@AdminProductSort.PriceDesc">Price · high to low</option> }
+                @if (sort == AdminProductSort.StockDesc) { <option value="@AdminProductSort.StockDesc" selected>Stock · highest</option> } else { <option value="@AdminProductSort.StockDesc">Stock · highest</option> }
+                @if (sort == AdminProductSort.StockAsc) { <option value="@AdminProductSort.StockAsc" selected>Stock · lowest</option> } else { <option value="@AdminProductSort.StockAsc">Stock · lowest</option> }
+                @if (sort == AdminProductSort.NameAsc) { <option value="@AdminProductSort.NameAsc" selected>Name · A–Z</option> } else { <option value="@AdminProductSort.NameAsc">Name · A–Z</option> }
             </select>
         </label>
-        <button class="btn btn--ghost" type="submit">Apply</button>
+        <div class="ops-filters__actions">
+            <button class="btn btn--outline" type="submit">Apply</button>
+        </div>
     </form>
 
     <div class="ops-panel">
@@ -88,7 +103,7 @@
                         <th>Product</th>
                         <th>Category</th>
                         <th>Status</th>
-                        <th>From</th>
+                        <th>From (@Money.DisplayUnit)</th>
                         <th>Available</th>
                         <th>On hand</th>
                         <th>OOS sizes</th>
@@ -112,7 +127,7 @@
                         </td>
                         <td>@(p.Category ?? "—")</td>
                         <td><span class="ops-badge">@p.Status</span></td>
-                        <td>@(p.FromPrice?.ToString("N0") ?? "—")</td>
+                        <td>@(p.FromPrice is null ? "—" : Money.FormatToman(p.FromPrice.Value))</td>
                         <td><strong>@p.Available</strong></td>
                         <td>@p.TotalOnHand <span class="ops-muted">/ r @p.TotalReserved</span></td>
                         <td>@p.OutOfStockSizes</td>

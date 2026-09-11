@@ -1,5 +1,6 @@
 @model Label33.Application.Catalog.AdminProductDetailDto
 @using Label33.Application.Catalog
+@using Label33.Application.Common
 @using Label33.Domain.Enums
 @{
     ViewData["Title"] = Model.Name;
@@ -128,11 +129,11 @@
 
     <form method="post" action="/ops-33-console/products/@Model.Id/sizes" class="ops-form ops-panel" style="margin-top:1rem">
         @Html.AntiForgeryToken()
-        <div class="ops-panel__head"><h2>Sizes & inventory</h2></div>
-        <p class="ops-muted">SKU prefix: <strong>@Model.SkuPrefix</strong> · Uncheck a size to deactivate it (not deleted).</p>
+        <div class="ops-panel__head"><h2>Sizes &amp; inventory</h2></div>
+        <p class="ops-muted">SKU prefix: <strong>@Model.SkuPrefix</strong> · Uncheck a size to deactivate it.</p>
         <label style="max-width:240px">
-            <span>Base / sync price (IRR)</span>
-            <input name="price" type="number" min="0" step="1000" value="@Model.BasePrice" required />
+            <span>Default price (@Money.DisplayUnit)</span>
+            <input id="editDefaultPrice" name="price" type="number" min="0" step="1000" value="@Money.ToToman(Model.BasePrice)" required />
         </label>
         <div class="ops-size-grid">
             @foreach (var size in sizes)
@@ -141,23 +142,27 @@
                 var enabled = variant?.IsActive == true;
                 var stock = variant?.QuantityOnHand ?? 0;
                 var reserved = variant?.QuantityReserved ?? 0;
+                var sizePrice = Money.ToToman(variant?.BasePrice ?? Model.BasePrice);
                 <div class="ops-size-card">
-                    <label class="ops-check">
+                    <label class="ops-check ops-size-card__head">
                         <input type="checkbox" name="sizeCodes" value="@size" @(enabled ? "checked" : null) />
                         <strong>@size</strong>
                     </label>
                     @if (variant is not null)
                     {
-                        <div class="ops-muted">@variant.Sku</div>
-                        <div class="ops-muted">Reserved @reserved · Avail @(variant.Available == int.MaxValue ? "∞" : variant.Available)</div>
+                        <div class="ops-muted">@variant.Sku · reserved @reserved · avail @(variant.Available == int.MaxValue ? "∞" : variant.Available)</div>
                     }
                     <label>
-                        <span>On hand</span>
-                        <input name="stock_@size" type="number" min="0" value="@stock" />
+                        <span>Stock</span>
+                        <input class="ops-size-card__input" name="stock_@size" type="number" min="0" value="@stock" />
+                    </label>
+                    <label>
+                        <span>Price (@Money.DisplayUnit)</span>
+                        <input class="ops-size-card__input" name="price_@size" type="number" min="0" step="1000" value="@sizePrice" />
                     </label>
                 </div>
             }
         </div>
-        <button class="btn btn--tan" type="submit">Save sizes & stock</button>
+        <button class="btn btn--tan" type="submit">Save sizes &amp; stock</button>
     </form>
 </section>

@@ -14,7 +14,7 @@
         {
             <div class="line">
                 <div>@item.ProductVariantId<br /><span style="color:var(--muted);font-size:.85rem;">× @item.Quantity</span></div>
-                <div>@((item.UnitPriceSnapshot * item.Quantity).ToString("N0")) IRR</div>
+                <div>@Money.FormatToman(item.UnitPriceSnapshot * item.Quantity) @Money.DisplayUnit</div>
             </div>
         }
         <div style="margin-top:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap;">

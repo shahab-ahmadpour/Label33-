@@ -1,9 +1,10 @@
 @using Label33.Application.Catalog
-@using Label33.Domain.Enums
+@using Label33.Application.Common
 @{
     ViewData["Title"] = "New product";
     var categories = ViewData["Categories"] as IReadOnlyList<CategoryDto> ?? Array.Empty<CategoryDto>();
     var sizes = ViewData["Sizes"] as string[] ?? CatalogDefaults.Sizes;
+    var defaultPrice = 89000m;
 }
 
 <section class="ops-page">
@@ -11,7 +12,7 @@
         <div>
             <div class="eyebrow">Warehouse</div>
             <h1>New product</h1>
-            <p class="ops-muted">Category, size matrix, stock per size, and images in one flow.</p>
+            <p class="ops-muted">Category, per-size price &amp; stock, and images.</p>
         </div>
         <a class="btn btn--ghost" href="/ops-33-console/products">Back</a>
     </header>
@@ -47,28 +48,34 @@
         </label>
         <div class="ops-form__row">
             <label>
-                <span>Base price (IRR)</span>
-                <input name="price" type="number" min="0" step="1000" value="890000" required />
+                <span>Default price (@Money.DisplayUnit)</span>
+                <input id="defaultPrice" name="price" type="number" min="0" step="1000" value="@defaultPrice" required />
             </label>
             <label class="ops-check" style="align-self:end">
                 <input type="checkbox" name="isFeatured" value="true" />
                 <span>Featured</span>
             </label>
         </div>
+        <p class="ops-muted">Default price fills empty size prices. Each size can override it.</p>
 
-        <div class="ops-panel__head" style="margin-top:1.25rem"><h2>Sizes & stock</h2></div>
-        <p class="ops-muted">Enable each size and set on-hand quantity. SKU becomes PREFIX-SIZE.</p>
+        <div class="ops-panel__head" style="margin-top:1.25rem"><h2>Sizes &amp; stock</h2></div>
+        <p class="ops-muted">Enable sizes, set stock and price per size. SKU = PREFIX-SIZE.</p>
         <div class="ops-size-grid">
             @foreach (var size in sizes)
             {
+                var on = size is "S" or "M" or "L" or "XL";
                 <div class="ops-size-card">
-                    <label class="ops-check">
-                        <input type="checkbox" name="sizeCodes" value="@size" @(size is "M" or "L" or "XL" ? "checked" : null) />
+                    <label class="ops-check ops-size-card__head">
+                        <input type="checkbox" name="sizeCodes" value="@size" @(on ? "checked" : null) />
                         <strong>@size</strong>
                     </label>
                     <label>
                         <span>Stock</span>
-                        <input name="stock_@size" type="number" min="0" value="@(size == "XL" ? 15 : 25)" />
+                        <input class="ops-size-card__input" name="stock_@size" type="number" min="0" value="@(size == "XL" ? 15 : 25)" />
+                    </label>
+                    <label>
+                        <span>Price (@Money.DisplayUnit)</span>
+                        <input class="ops-size-card__input ops-size-price" name="price_@size" type="number" min="0" step="1000" value="@defaultPrice" />
                     </label>
                 </div>
             }
@@ -89,3 +96,17 @@
         <button class="btn btn--tan" type="submit">Create product</button>
     </form>
 </section>
+<script>
+(() => {
+  const def = document.getElementById('defaultPrice');
+  if (!def) return;
+  def.addEventListener('change', () => {
+    document.querySelectorAll('.ops-size-price').forEach((el) => {
+      if (!el.dataset.touched) el.value = def.value;
+    });
+  });
+  document.querySelectorAll('.ops-size-price').forEach((el) => {
+    el.addEventListener('input', () => { el.dataset.touched = '1'; });
+  });
+})();
+</script>

@@ -10,7 +10,7 @@
         <div>
             <div class="eyebrow">Order</div>
             <h1>@Model.OrderNumber</h1>
-            <p class="ops-muted"><span class="ops-badge">@Model.Status</span> · @Model.GrandTotal.ToString("N0") @Model.Currency</p>
+            <p class="ops-muted"><span class="ops-badge">@Model.Status</span> · @Money.FormatToman(Model.GrandTotal) @Money.DisplayUnit</p>
         </div>
         <a class="btn btn--ghost" href="/ops-33-console/orders">Back</a>
     </header>
@@ -34,7 +34,7 @@
                         <td>@item.ProductNameSnapshot<br /><span class="ops-muted">@item.VariantTitleSnapshot</span></td>
                         <td>@item.SkuSnapshot</td>
                         <td>@item.Quantity</td>
-                        <td>@item.LineTotal.ToString("N0")</td>
+                        <td>@Money.FormatToman(item.LineTotal)</td>
                     </tr>
                 }
                 </tbody>
@@ -165,7 +165,7 @@
                     <tr>
                         <td>@p.Provider</td>
                         <td>@(p.ProviderRef ?? "—")</td>
-                        <td>@p.Amount.ToString("N0")</td>
+                        <td>@Money.FormatToman(p.Amount)</td>
                         <td>@p.Status</td>
                     </tr>
                 }
