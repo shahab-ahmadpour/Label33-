@@ -8,8 +8,16 @@
   var postal = document.getElementById("postalCode");
   var provinceEl = document.getElementById("province");
   var cityEl = document.getElementById("city");
-  /** @type {Record<string, string[]>|null} */
-  var geo = null;
+  var lang = (form.getAttribute("data-lang") || "fa").toLowerCase().indexOf("en") === 0 ? "en" : "fa";
+  var i18n = {
+    selectProvince: form.getAttribute("data-i18n-select-province") || (lang === "en" ? "Select province" : "انتخاب استان"),
+    selectCity: form.getAttribute("data-i18n-select-city") || (lang === "en" ? "Select city" : "انتخاب شهر"),
+    selectProvinceFirst: form.getAttribute("data-i18n-select-province-first") || (lang === "en" ? "Select a province first" : "ابتدا استان را انتخاب کنید"),
+    geoLoadError: form.getAttribute("data-i18n-geo-load-error") || (lang === "en" ? "Could not load provinces" : "خطا در بارگذاری استان‌ها")
+  };
+
+  /** @type {{fa:string,en:string,cities:{fa:string,en:string}[]}[]|null} */
+  var provinces = null;
 
   function digitsOnly(value, max) {
     return String(value || "").replace(/\D/g, "").slice(0, max);
@@ -20,6 +28,19 @@
     var hasPlus = raw.trim().charAt(0) === "+";
     var digits = raw.replace(/\D/g, "").slice(0, 15);
     return hasPlus ? "+" + digits : digits;
+  }
+
+  function labelOf(item) {
+    return lang === "en" ? item.en : item.fa;
+  }
+
+  function findProvince(value) {
+    if (!provinces || !value) return null;
+    for (var i = 0; i < provinces.length; i++) {
+      var p = provinces[i];
+      if (p.fa === value || p.en === value) return p;
+    }
+    return null;
   }
 
   if (phone) {
@@ -47,30 +68,37 @@
   }
 
   function fillProvinces() {
-    if (!geo || !provinceEl) return;
+    if (!provinces || !provinceEl) return;
     var current = provinceEl.value;
-    provinceEl.innerHTML = '<option value="">انتخاب استان</option>';
-    Object.keys(geo)
-      .sort(function (a, b) {
-        return a.localeCompare(b, "fa");
-      })
-      .forEach(function (name) {
-        var opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        if (name === current) opt.selected = true;
-        provinceEl.appendChild(opt);
-      });
+    provinceEl.innerHTML = "";
+    var placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = i18n.selectProvince;
+    provinceEl.appendChild(placeholder);
+
+    var sorted = provinces.slice().sort(function (a, b) {
+      return labelOf(a).localeCompare(labelOf(b), lang === "en" ? "en" : "fa");
+    });
+
+    sorted.forEach(function (p) {
+      var opt = document.createElement("option");
+      // Canonical Persian value for storage / shipping in Iran.
+      opt.value = p.fa;
+      opt.textContent = labelOf(p);
+      if (p.fa === current || p.en === current) opt.selected = true;
+      provinceEl.appendChild(opt);
+    });
   }
 
-  function fillCities(provinceName) {
+  function fillCities(provinceValue) {
     if (!cityEl) return;
     cityEl.innerHTML = "";
-    if (!provinceName || !geo || !geo[provinceName]) {
+    var province = findProvince(provinceValue);
+    if (!province) {
       cityEl.disabled = true;
       var empty = document.createElement("option");
       empty.value = "";
-      empty.textContent = "ابتدا استان را انتخاب کنید";
+      empty.textContent = i18n.selectProvinceFirst;
       cityEl.appendChild(empty);
       return;
     }
@@ -78,13 +106,17 @@
     cityEl.disabled = false;
     var placeholder = document.createElement("option");
     placeholder.value = "";
-    placeholder.textContent = "انتخاب شهر";
+    placeholder.textContent = i18n.selectCity;
     cityEl.appendChild(placeholder);
 
-    geo[provinceName].forEach(function (name) {
+    var cities = province.cities.slice().sort(function (a, b) {
+      return labelOf(a).localeCompare(labelOf(b), lang === "en" ? "en" : "fa");
+    });
+
+    cities.forEach(function (c) {
       var opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
+      opt.value = c.fa;
+      opt.textContent = labelOf(c);
       cityEl.appendChild(opt);
     });
   }
@@ -101,13 +133,17 @@
       return r.json();
     })
     .then(function (data) {
-      geo = data;
+      provinces = data.provinces || [];
       fillProvinces();
       if (provinceEl && provinceEl.value) fillCities(provinceEl.value);
     })
     .catch(function () {
       if (provinceEl) {
-        provinceEl.innerHTML = '<option value="">خطا در بارگذاری استان‌ها</option>';
+        provinceEl.innerHTML = "";
+        var err = document.createElement("option");
+        err.value = "";
+        err.textContent = i18n.geoLoadError;
+        provinceEl.appendChild(err);
       }
     });
 

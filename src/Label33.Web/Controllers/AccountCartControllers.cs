@@ -185,6 +185,8 @@ public class CheckoutController : Controller
                 return RedirectToAction(nameof(Index));
             }
 
+            (province, city) = IranGeo.ToPersian(_env.WebRootPath, province, city);
+
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var cart = await _carts.GetOrCreateAsync(userId, null, ct);
             var result = await _checkout.CheckoutAsync(

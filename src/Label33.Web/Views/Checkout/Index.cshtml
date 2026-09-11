@@ -13,7 +13,13 @@
     }
     else
     {
-        <form asp-action="Place" method="post" class="stack checkout-form" id="checkout-form" style="margin-top:1.25rem;" novalidate>
+        <form asp-action="Place" method="post" class="stack checkout-form" id="checkout-form"
+              style="margin-top:1.25rem;" novalidate
+              data-lang="@L.Culture"
+              data-i18n-select-province="@L["checkout.selectProvince"]"
+              data-i18n-select-city="@L["checkout.selectCity"]"
+              data-i18n-select-province-first="@L["checkout.selectProvinceFirst"]"
+              data-i18n-geo-load-error="@L["checkout.geoLoadError"]">
             @Html.AntiForgeryToken()
             <div class="field">
                 <label for="fullName">@L["checkout.fullName"]</label>
@@ -24,19 +30,19 @@
                 <input id="phone" name="phone" type="tel" inputmode="tel" required
                        maxlength="16" autocomplete="tel"
                        pattern="^\+?[0-9]{1,15}$"
-                       title="فقط عدد و در صورت نیاز + در ابتدا، حداکثر ۱۵ رقم" />
+                       title="@L["checkout.phoneTitle"]" />
             </div>
             <div class="checkout-form__row">
                 <div class="field">
                     <label for="province">@L["checkout.province"]</label>
                     <select id="province" name="province" required>
-                        <option value="">انتخاب استان</option>
+                        <option value="">@L["checkout.selectProvince"]</option>
                     </select>
                 </div>
                 <div class="field">
                     <label for="city">@L["checkout.city"]</label>
                     <select id="city" name="city" required disabled>
-                        <option value="">ابتدا استان را انتخاب کنید</option>
+                        <option value="">@L["checkout.selectProvinceFirst"]</option>
                     </select>
                 </div>
             </div>
@@ -45,7 +51,7 @@
                 <input id="postalCode" name="postalCode" type="text" inputmode="numeric" required
                        maxlength="10" autocomplete="postal-code"
                        pattern="^[0-9]{1,10}$"
-                       title="فقط عدد، حداکثر ۱۰ رقم" />
+                       title="@L["checkout.postalTitle"]" />
             </div>
             <div class="field">
                 <label for="line1">@L["checkout.line1"]</label>
