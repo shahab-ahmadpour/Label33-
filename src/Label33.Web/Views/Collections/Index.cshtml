@@ -1,21 +1,38 @@
 @model IReadOnlyList<Label33.Application.Catalog.ProductListItemDto>
 @inject Label33.Web.Localization.IBrandLocalizer L
 
-<section class="container story">
+<section class="container story" style="padding-bottom:2rem;">
     <div class="eyebrow">33</div>
     <h1 class="display">@L["collections.title"]</h1>
     <p style="max-width:36rem;color:var(--muted);">Editorial drops — same clothes, different minds.</p>
 </section>
 
-<section class="hero" style="min-height:70vh;">
+<section class="container">
+    <div class="cat-grid">
+        <a class="cat-tile cat-tile--ink" asp-controller="Shop" asp-action="Index" asp-route-category="T-SHIRTS">T-Shirts</a>
+        <a class="cat-tile cat-tile--olive" asp-controller="Shop" asp-action="Index" asp-route-category="HOODIES">Hoodies</a>
+        <a class="cat-tile cat-tile--tan" asp-controller="Shop" asp-action="Index" asp-route-category="SWEATSHIRTS">Sweatshirts</a>
+        <a class="cat-tile cat-tile--ember" asp-controller="Shop" asp-action="Index" asp-route-category="JOGGERS">Joggers</a>
+    </div>
+</section>
+
+<section class="hero hero--dark" style="min-height:64vh;">
     <div class="hero__visual">
         <img src="~/brand/diyar/diyar-main.png" alt="Campaign" />
     </div>
     <div class="hero__content">
         <div class="eyebrow">Campaign</div>
-        <h2 class="display" style="font-size:clamp(2rem,5vw,3.5rem);margin:0;">Everyday Uniform</h2>
+        <h2 class="display">Everyday Uniform</h2>
         <p>Diyar moves through the frame. The clothes stay familiar. The mind shifts.</p>
-        <a class="btn" asp-controller="Shop" asp-action="Index">@L["hero.cta.shop"]</a>
+        <a class="btn btn--tan" asp-controller="Shop" asp-action="Index">@L["hero.cta.shop"]</a>
+    </div>
+</section>
+
+<section class="band band--olive">
+    <div class="container" style="display:grid;gap:.75rem;max-width:40rem;">
+        <div class="eyebrow">Palette</div>
+        <h2 class="display" style="margin:0;font-size:clamp(1.6rem,3.5vw,2.4rem);">Ink · Olive · Tan</h2>
+        <p style="margin:0;">Streetwear tones from the 33 LABEL system — dark body, olive field, tan mark.</p>
     </div>
 </section>
 

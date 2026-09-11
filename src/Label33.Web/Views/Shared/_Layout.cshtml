@@ -5,12 +5,13 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@(ViewData["Title"] != null ? $"{ViewData["Title"]} — " : "")۳۳</title>
+    <title>@(ViewData["Title"] != null ? $"{ViewData["Title"]} — " : "")33</title>
     <link rel="icon" href="~/brand/diyar/diyar-main.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Vazirmatn:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&display=swap" rel="stylesheet" />
     <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/gh/AmirAbbasVafaee/persian-fonts-cdn@main/css/dana.css" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/brand.css" asp-append-version="true" />
 </head>
 <body>
@@ -26,7 +27,7 @@
             </div>
         </div>
         <div class="intro__copy">
-            <p class="brand-num">۳۳</p>
+            <p class="brand-num">33</p>
             <p class="tag">SAME CLOTHES.
 DIFFERENT MINDS.</p>
         </div>
@@ -36,9 +37,9 @@ DIFFERENT MINDS.</p>
 
 <header class="site-header">
     <div class="container nav" id="site-nav">
-        <a class="nav__brand" asp-controller="Home" asp-action="Index" aria-label="33">
-            <img src="~/brand/diyar/diyar-mark.png" alt="" width="32" height="32" />
-            <span class="nav__brand-word">۳۳</span>
+        <a class="nav__brand" asp-controller="Home" asp-action="Index" aria-label="33 Label">
+            <span class="nav__brand-word">33</span>
+            <img src="~/brand/diyar/diyar-mark.png" alt="" width="28" height="28" />
         </a>
 
         <button class="nav__burger" id="nav-burger" type="button" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -51,16 +52,24 @@ DIFFERENT MINDS.</p>
         </ul>
 
         <div class="nav__actions">
-            <a class="hide-sm" asp-controller="Shop" asp-action="Index" asp-route-q="">@L["nav.search"]</a>
+            <a class="nav__icon" asp-controller="Shop" asp-action="Index" aria-label="@L["nav.search"]" title="@L["nav.search"]">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16.5 16.5L21 21"/></svg>
+            </a>
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <a asp-controller="Account" asp-action="Index">@L["nav.account"]</a>
+                <a class="nav__icon" asp-controller="Account" asp-action="Index" aria-label="@L["nav.account"]" title="@L["nav.account"]">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 19c1.8-3.2 4.2-4.8 7-4.8s5.2 1.6 7 4.8"/></svg>
+                </a>
             }
             else
             {
-                <a asp-controller="Account" asp-action="Login">@L["nav.login"]</a>
+                <a class="nav__icon" asp-controller="Account" asp-action="Login" aria-label="@L["nav.login"]" title="@L["nav.login"]">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 19c1.8-3.2 4.2-4.8 7-4.8s5.2 1.6 7 4.8"/></svg>
+                </a>
             }
-            <a asp-controller="Cart" asp-action="Index">@L["nav.cart"]</a>
+            <a class="nav__icon" asp-controller="Cart" asp-action="Index" aria-label="@L["nav.cart"]" title="@L["nav.cart"]">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1.2 11H7.2L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>
+            </a>
             <form asp-controller="Culture" asp-action="Set" method="post" style="display:inline">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="culture" value="@(L.Culture == "fa" ? "en" : "fa")" />
@@ -78,10 +87,10 @@ DIFFERENT MINDS.</p>
 <footer class="site-footer">
     <div class="container site-footer__grid">
         <div>
-            <strong>۳۳</strong>
+            <strong>33</strong>
             <div>@L["footer.tag"]</div>
         </div>
-        <div>33label</div>
+        <div>33 LABEL · EST. 2024</div>
     </div>
 </footer>
 

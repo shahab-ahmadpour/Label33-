@@ -62,19 +62,19 @@
   function flightProgress(t) {
     // t in 0..1 over full intro
     if (t < 0.30) {
-      // approach center
+      // approach center — higher altitude so bird clears the 33 mark
       const u = easeInOutCubic(t / 0.30);
-      return { x: -48 + u * 86, y: 62 - u * 18, coast: false, phase: 'enter' };
+      return { x: -48 + u * 86, y: 38 - u * 14, coast: false, phase: 'enter' };
     }
     if (t < 0.55) {
-      // soft mid-screen pause with tiny hover (~2.2s)
+      // soft mid-screen pause with tiny hover (~2.2s), above the logo
       const u = (t - 0.30) / 0.25;
-      const hover = Math.sin(u * Math.PI * 2) * 1.1;
-      return { x: 38 + hover * 0.35, y: 44 + hover, coast: true, phase: 'pause' };
+      const hover = Math.sin(u * Math.PI * 2) * 1.0;
+      return { x: 38 + hover * 0.35, y: 24 + hover, coast: true, phase: 'pause' };
     }
-    // exit
+    // exit higher toward top-right
     const u = easeInOutCubic((t - 0.55) / 0.45);
-    return { x: 38 + u * 78, y: 44 - u * 28, coast: false, phase: 'exit' };
+    return { x: 38 + u * 78, y: 24 - u * 18, coast: false, phase: 'exit' };
   }
 
   function runIntroFlight(birdEl, onDone) {

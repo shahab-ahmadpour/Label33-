@@ -1,28 +1,40 @@
 ﻿@model IReadOnlyList<Label33.Application.Catalog.ProductListItemDto>
 @inject Label33.Web.Localization.IBrandLocalizer L
 @{
-    ViewData["Title"] = "۳۳";
+    ViewData["Title"] = "33";
 }
 
-<section class="hero">
-    <div class="hero__content">
-        <div class="eyebrow">33label</div>
-        <h1 class="display">@L["hero.tagline"]</h1>
-        <p>@L["hero.support"]</p>
-        <div class="hero__cta">
+<section class="hero-home">
+    <img class="hero-home__mark" src="~/brand/diyar/diyar-main.png" alt="" aria-hidden="true" />
+    <div class="hero-home__inner">
+        <div class="eyebrow">33LABEL · SS 2025</div>
+        <h1 class="hero-home__title">
+            <span class="line">SAME</span>
+            <span class="line">CLOTHES.</span>
+            <span class="line accent">DIFFERENT</span>
+            <span class="line">MINDS.</span>
+        </h1>
+        <p class="hero-home__support">@L["hero.support"]</p>
+        <div class="hero-home__cta">
             <a class="btn" asp-controller="Shop" asp-action="Index">@L["hero.cta.shop"]</a>
             <a class="btn btn--ghost" asp-controller="Diyar" asp-action="Index">@L["hero.cta.diyar"]</a>
         </div>
     </div>
-    <div class="hero__visual">
-        <img src="~/brand/diyar/diyar-main.png" alt="Diyar" />
+    <div class="hero-home__scroll">Scroll</div>
+</section>
+
+<section class="band band--ink">
+    <div class="container" style="display:grid;gap:1rem;max-width:42rem;">
+        <div class="eyebrow">Manifesto</div>
+        <h2 class="display" style="font-size:clamp(1.8rem,4vw,2.8rem);margin:0;color:var(--tan);">Three people. Three perspectives. One brand.</h2>
+        <p style="margin:0;">SAME CLOTHES. DIFFERENT MINDS.</p>
     </div>
 </section>
 
 @if (Model.Count > 0)
 {
     <section class="container" style="padding-block: 4rem;">
-        <div class="eyebrow">33</div>
+        <div class="eyebrow">Drop</div>
         <h2 class="display" style="font-size: clamp(1.8rem, 4vw, 2.8rem); margin: 0.4rem 0 2rem;">@L["shop.title"]</h2>
         <div class="product-grid">
             @foreach (var p in Model)
@@ -44,7 +56,7 @@
                         <form asp-controller="Cart" asp-action="QuickAdd" method="post">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="slug" value="@p.Slug" />
-                            <button class="btn btn--mustard" type="submit">@L["shop.quickAdd"]</button>
+                            <button class="btn btn--tan" type="submit">@L["shop.quickAdd"]</button>
                         </form>
                     </div>
                 </article>
