@@ -1,5 +1,6 @@
 using Label33.Application.Abstractions;
 using Label33.Application.Common;
+using Label33.Domain.Entities;
 using Label33.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,62 @@ public class CouponService
     {
         _db = db;
         _clock = clock;
+    }
+
+    public async Task<IReadOnlyList<Coupon>> ListAsync(CancellationToken ct = default)
+        => await _db.Coupons
+            .AsNoTracking()
+            .OrderByDescending(c => c.IsActive)
+            .ThenByDescending(c => c.CreatedAtUtc)
+            .ToListAsync(ct);
+
+    public async Task<Coupon> CreateAsync(
+        string code,
+        DiscountType discountType,
+        decimal value,
+        decimal? minOrderAmount,
+        int? maxUses,
+        DateTime? startsAtUtc,
+        DateTime? endsAtUtc,
+        CancellationToken ct = default)
+    {
+        code = (code ?? string.Empty).Trim().ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(code))
+            throw new DomainException("Coupon code is required.");
+        if (value <= 0)
+            throw new DomainException("Coupon value must be greater than zero.");
+        if (discountType == DiscountType.Percent && value > 100)
+            throw new DomainException("Percent coupon cannot exceed 100.");
+        if (maxUses is <= 0)
+            throw new DomainException("Max uses must be positive.");
+        if (startsAtUtc.HasValue && endsAtUtc.HasValue && endsAtUtc < startsAtUtc)
+            throw new DomainException("End date must be after start date.");
+
+        if (await _db.Coupons.AnyAsync(c => c.Code == code, ct))
+            throw new DomainException("Coupon code already exists.");
+
+        var coupon = new Coupon
+        {
+            Code = code,
+            DiscountType = discountType,
+            Value = value,
+            MinOrderAmount = minOrderAmount is > 0 ? minOrderAmount : null,
+            MaxUses = maxUses,
+            StartsAtUtc = startsAtUtc,
+            EndsAtUtc = endsAtUtc,
+            IsActive = true
+        };
+        _db.Coupons.Add(coupon);
+        await _db.SaveChangesAsync(ct);
+        return coupon;
+    }
+
+    public async Task DeactivateAsync(Guid id, CancellationToken ct = default)
+    {
+        var coupon = await _db.Coupons.FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new DomainException("Coupon not found.");
+        coupon.IsActive = false;
+        await _db.SaveChangesAsync(ct);
     }
 
     public async Task<decimal> CalculateDiscountAsync(string? code, decimal subtotal, CancellationToken ct = default)
@@ -41,7 +98,7 @@ public class CouponService
         return coupon.Id;
     }
 
-    private void Validate(Domain.Entities.Coupon coupon, decimal subtotal)
+    private void Validate(Coupon coupon, decimal subtotal)
     {
         var now = _clock.UtcNow;
         if (!coupon.IsActive)

@@ -17,19 +17,22 @@ public class PaymentOrchestrator
     private readonly IClock _clock;
     private readonly InventoryService _inventory;
     private readonly FulfillmentService _fulfillment;
+    private readonly IEmailSender _email;
 
     public PaymentOrchestrator(
         IAppDbContext db,
         IPaymentGateway gateway,
         IClock clock,
         InventoryService inventory,
-        FulfillmentService fulfillment)
+        FulfillmentService fulfillment,
+        IEmailSender email)
     {
         _db = db;
         _gateway = gateway;
         _clock = clock;
         _inventory = inventory;
         _fulfillment = fulfillment;
+        _email = email;
     }
 
     public async Task<StartPaymentResult> StartAsync(Guid orderId, string callbackUrl, CancellationToken ct = default)
@@ -114,38 +117,40 @@ public class PaymentOrchestrator
         await _fulfillment.StartAfterPaymentAsync(tx.OrderId, ct);
     }
 
+    public async Task SendOrderPaidEmailAsync(Guid orderId, string? toEmail, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(toEmail))
+            return;
+
+        var order = await _db.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.Id == orderId, ct);
+        if (order is null)
+            return;
+
+        var subject = $"33 Label order {order.OrderNumber}";
+        var body =
+            $"Payment received for order {order.OrderNumber}.\n" +
+            $"Total: {order.GrandTotal:N0} {order.Currency}\n" +
+            $"Status: {order.Status}\n";
+        await _email.SendAsync(toEmail, subject, body, ct);
+    }
+
     private async Task ConsumeCheckoutReservationsAsync(Guid orderId, CancellationToken ct)
     {
-        var order = await _db.Orders.Include(o => o.Items).FirstAsync(o => o.Id == orderId, ct);
-        // Match active reservations by variant+qty created around this cart conversion window
-        foreach (var item in order.Items)
-        {
-            var reservation = await _db.InventoryReservations
-                .Where(r => r.ProductVariantId == item.ProductVariantId
-                            && r.Quantity == item.Quantity
-                            && r.Status == ReservationStatus.Active)
-                .OrderByDescending(r => r.CreatedAtUtc)
-                .FirstOrDefaultAsync(ct);
+        var reservations = await _db.InventoryReservations
+            .Where(r => r.OrderId == orderId && r.Status == ReservationStatus.Active)
+            .ToListAsync(ct);
 
-            if (reservation is not null)
-                await _inventory.ConsumeAsync(reservation.Id, ct);
-        }
+        foreach (var reservation in reservations)
+            await _inventory.ConsumeAsync(reservation.Id, ct);
     }
 
     private async Task ReleaseCheckoutReservationsAsync(Guid orderId, CancellationToken ct)
     {
-        var order = await _db.Orders.Include(o => o.Items).FirstAsync(o => o.Id == orderId, ct);
-        foreach (var item in order.Items)
-        {
-            var reservation = await _db.InventoryReservations
-                .Where(r => r.ProductVariantId == item.ProductVariantId
-                            && r.Quantity == item.Quantity
-                            && r.Status == ReservationStatus.Active)
-                .OrderByDescending(r => r.CreatedAtUtc)
-                .FirstOrDefaultAsync(ct);
+        var reservations = await _db.InventoryReservations
+            .Where(r => r.OrderId == orderId && r.Status == ReservationStatus.Active)
+            .ToListAsync(ct);
 
-            if (reservation is not null)
-                await _inventory.ReleaseAsync(reservation.Id, ct);
-        }
+        foreach (var reservation in reservations)
+            await _inventory.ReleaseAsync(reservation.Id, ct);
     }
 }

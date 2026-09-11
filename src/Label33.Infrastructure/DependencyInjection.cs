@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Label33.Infrastructure;
 
@@ -44,7 +45,11 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddScoped<IOrderNumberGenerator, OrderNumberGenerator>();
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();
-        services.AddSingleton<IEmailSender, NullEmailSender>();
+
+        var emailRoot = configuration.GetValue<string>("Email:FileRoot")
+            ?? Path.Combine(AppContext.BaseDirectory, "App_Data", "email");
+        services.AddSingleton<IEmailSender>(sp =>
+            new FileEmailSender(emailRoot, sp.GetRequiredService<ILogger<FileEmailSender>>()));
 
         var storageRoot = configuration.GetValue<string>("Storage:Root")
             ?? Path.Combine(AppContext.BaseDirectory, "App_Data", "files");

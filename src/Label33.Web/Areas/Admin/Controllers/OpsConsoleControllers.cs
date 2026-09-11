@@ -671,3 +671,62 @@ public class TeamController : Controller
 }
 
 public record TeamMemberVm(Guid Id, string Email, string? DisplayName, string Role);
+
+[Area("Admin")]
+[Route("ops-33-console/coupons")]
+[Authorize(Policy = "OpsConsole")]
+public class CouponsController : Controller
+{
+    private readonly Label33.Application.Coupons.CouponService _coupons;
+
+    public CouponsController(Label33.Application.Coupons.CouponService coupons) => _coupons = coupons;
+
+    [HttpGet("")]
+    public async Task<IActionResult> Index(CancellationToken ct)
+    {
+        ViewData["Title"] = "Coupons";
+        return View(await _coupons.ListAsync(ct));
+    }
+
+    [HttpPost("create")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(
+        string code,
+        DiscountType discountType,
+        decimal value,
+        decimal? minOrderAmount,
+        int? maxUses,
+        DateTime? startsAtUtc,
+        DateTime? endsAtUtc,
+        CancellationToken ct)
+    {
+        try
+        {
+            await _coupons.CreateAsync(code, discountType, value, minOrderAmount, maxUses, startsAtUtc, endsAtUtc, ct);
+            TempData["Ok"] = "Coupon created.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect("/ops-33-console/coupons");
+    }
+
+    [HttpPost("{id:guid}/deactivate")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            await _coupons.DeactivateAsync(id, ct);
+            TempData["Ok"] = "Coupon deactivated.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect("/ops-33-console/coupons");
+    }
+}

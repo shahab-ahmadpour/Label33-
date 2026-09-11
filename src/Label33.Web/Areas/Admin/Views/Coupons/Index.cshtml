@@ -1,0 +1,83 @@
+@model IReadOnlyList<Label33.Domain.Entities.Coupon>
+@using Label33.Domain.Enums
+@using Label33.Application.Common
+@{
+    ViewData["Title"] = "Coupons";
+}
+
+<section class="ops-page">
+    <header class="ops-page__head">
+        <div>
+            <div class="eyebrow">Growth</div>
+            <h1>Coupons</h1>
+        </div>
+    </header>
+
+    <form method="post" action="/ops-33-console/coupons/create" class="ops-form ops-panel" style="margin-bottom:1.25rem;">
+        @Html.AntiForgeryToken()
+        <div class="ops-panel__head"><h2>Create coupon</h2></div>
+        <div class="ops-form__row">
+            <label><span>Code</span><input name="code" required placeholder="WELCOME10" /></label>
+            <label>
+                <span>Type</span>
+                <select name="discountType">
+                    <option value="@DiscountType.Percent">Percent</option>
+                    <option value="@DiscountType.FixedAmount">Fixed amount (Rials)</option>
+                </select>
+            </label>
+        </div>
+        <div class="ops-form__row">
+            <label><span>Value</span><input name="value" type="number" min="1" step="1" required /></label>
+            <label><span>Min order (Rials)</span><input name="minOrderAmount" type="number" min="0" step="1000" /></label>
+        </div>
+        <div class="ops-form__row">
+            <label><span>Max uses</span><input name="maxUses" type="number" min="1" step="1" /></label>
+            <label><span>Starts (UTC)</span><input name="startsAtUtc" type="datetime-local" /></label>
+            <label><span>Ends (UTC)</span><input name="endsAtUtc" type="datetime-local" /></label>
+        </div>
+        <button class="btn btn--tan" type="submit">Create</button>
+    </form>
+
+    <div class="ops-panel">
+        @if (Model.Count == 0)
+        {
+            <p class="ops-muted">No coupons yet.</p>
+        }
+        else
+        {
+            <table class="ops-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Type</th>
+                        <th>Value</th>
+                        <th>Uses</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td><strong>@c.Code</strong></td>
+                        <td>@c.DiscountType</td>
+                        <td>@(c.DiscountType == DiscountType.Percent ? $"{c.Value:0}%" : Money.FormatToman(c.Value) + " " + Money.DisplayUnit)</td>
+                        <td>@c.UsedCount@(c.MaxUses is null ? "" : $" / {c.MaxUses}")</td>
+                        <td><span class="ops-badge">@(c.IsActive ? "Active" : "Off")</span></td>
+                        <td>
+                            @if (c.IsActive)
+                            {
+                                <form method="post" action="/ops-33-console/coupons/@c.Id/deactivate" style="display:inline">
+                                    @Html.AntiForgeryToken()
+                                    <button class="ops-link-danger" type="submit">Deactivate</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+</section>

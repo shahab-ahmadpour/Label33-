@@ -189,6 +189,15 @@ public class PaymentsController : Controller
         {
             await _payments.VerifyAndCompleteAsync(providerRef, Request.QueryString.Value, ct);
             var orderNumber = await _orders.GetOrderNumberByProviderRefAsync(providerRef, ct);
+            var email = User.Identity?.IsAuthenticated == true ? User.FindFirstValue(ClaimTypes.Email) : null;
+            if (!string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(orderNumber))
+            {
+                // best-effort confirmation email (file/console sender in non-prod)
+                var order = await _orders.ListForUserAsync(Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!), ct);
+                var paid = order.FirstOrDefault(o => o.OrderNumber == orderNumber);
+                if (paid is not null)
+                    await _payments.SendOrderPaidEmailAsync(paid.Id, email, ct);
+            }
             ViewData["Title"] = "Paid";
             return View("Callback", new PaymentCallbackVm(true, orderNumber, providerRef));
         }

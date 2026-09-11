@@ -21,6 +21,7 @@ public class InventoryReservation : EntityBase
 {
     public Guid? CartId { get; set; }
     public Guid? CheckoutSessionId { get; set; }
+    public Guid? OrderId { get; set; }
     public Guid ProductVariantId { get; set; }
     public int Quantity { get; set; }
     public DateTime ExpiresAtUtc { get; set; }
@@ -28,4 +29,5 @@ public class InventoryReservation : EntityBase
 
     public ProductVariant ProductVariant { get; set; } = null!;
     public Cart? Cart { get; set; }
+    public Order? Order { get; set; }
 }

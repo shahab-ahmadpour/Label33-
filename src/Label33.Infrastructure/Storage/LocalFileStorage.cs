@@ -1,4 +1,5 @@
 using Label33.Application.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace Label33.Infrastructure.Storage;
 
@@ -27,6 +28,29 @@ public sealed class LocalFileStorage : IFileStorage
         var fullPath = Path.Combine(_root, storageKey.Replace('/', Path.DirectorySeparatorChar));
         Stream stream = File.OpenRead(fullPath);
         return Task.FromResult(stream);
+    }
+}
+
+public sealed class FileEmailSender : IEmailSender
+{
+    private readonly string _root;
+    private readonly ILogger<FileEmailSender> _logger;
+
+    public FileEmailSender(string root, ILogger<FileEmailSender> logger)
+    {
+        _root = root;
+        _logger = logger;
+        Directory.CreateDirectory(_root);
+    }
+
+    public async Task SendAsync(string to, string subject, string body, CancellationToken cancellationToken = default)
+    {
+        var stamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
+        var safeTo = string.Join("_", (to ?? "unknown").Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+        var path = Path.Combine(_root, $"{stamp}__{safeTo}.txt");
+        var content = $"To: {to}\nSubject: {subject}\nUtc: {DateTime.UtcNow:O}\n\n{body}\n";
+        await File.WriteAllTextAsync(path, content, cancellationToken);
+        _logger.LogInformation("Email queued to file {Path} for {To}: {Subject}", path, to, subject);
     }
 }
 

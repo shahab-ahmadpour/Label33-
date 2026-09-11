@@ -143,6 +143,16 @@ public class CheckoutService
         cart.UpdatedAtUtc = _clock.UtcNow;
         await _db.SaveChangesAsync(ct);
 
+        if (reservationIds.Count > 0)
+        {
+            var reservations = await _db.InventoryReservations
+                .Where(r => reservationIds.Contains(r.Id))
+                .ToListAsync(ct);
+            foreach (var reservation in reservations)
+                reservation.OrderId = order.Id;
+            await _db.SaveChangesAsync(ct);
+        }
+
         return new CheckoutResult(order.Id, order.OrderNumber, order.GrandTotal, reservationIds);
     }
 }
