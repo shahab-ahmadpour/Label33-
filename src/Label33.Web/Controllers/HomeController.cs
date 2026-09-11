@@ -50,6 +50,7 @@ public class ShopController : Controller
     {
         ViewData["Title"] = "Shop";
         ViewData["Category"] = string.IsNullOrWhiteSpace(category) ? "ALL" : category.ToUpperInvariant();
+        ViewData["Query"] = q?.Trim() ?? "";
         var products = await _catalog.ListPublishedAsync(q, ct);
         var selected = (string)ViewData["Category"]!;
         if (!string.Equals(selected, "ALL", StringComparison.OrdinalIgnoreCase))

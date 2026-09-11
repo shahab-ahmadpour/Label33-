@@ -147,7 +147,10 @@
   if (intro) {
     const navEntries = performance.getEntriesByType('navigation');
     const navType = navEntries.length ? navEntries[0].type : 'navigate';
-    if (navType === 'back_forward' && sessionStorage.getItem('label33.intro.played') === '1') {
+    const played = sessionStorage.getItem('label33.intro.played') === '1';
+    // Intro only on first open or hard refresh — not when clicking the logo/home link
+    const shouldPlay = navType === 'reload' || !played;
+    if (!shouldPlay) {
       intro.remove();
     } else {
       sessionStorage.setItem('label33.intro.played', '1');
@@ -161,6 +164,38 @@
       skip?.addEventListener('click', () => finishIntro(stopFlight));
     }
   }
+
+  // Search overlay
+  const searchToggle = document.getElementById('search-toggle');
+  const searchPanel = document.getElementById('search-panel');
+  const searchInput = document.getElementById('search-input');
+  const searchClose = document.getElementById('search-close');
+
+  function openSearch() {
+    if (!searchPanel) return;
+    searchPanel.classList.add('is-open');
+    searchPanel.setAttribute('aria-hidden', 'false');
+    window.setTimeout(() => searchInput?.focus(), 50);
+  }
+
+  function closeSearch() {
+    if (!searchPanel) return;
+    searchPanel.classList.remove('is-open');
+    searchPanel.setAttribute('aria-hidden', 'true');
+  }
+
+  searchToggle?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (searchPanel?.classList.contains('is-open')) closeSearch();
+    else openSearch();
+  });
+  searchClose?.addEventListener('click', closeSearch);
+  searchPanel?.addEventListener('click', (e) => {
+    if (e.target === searchPanel) closeSearch();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSearch();
+  });
 
   idleFlaps(document);
   burger?.addEventListener('click', () => nav?.classList.toggle('is-open'));

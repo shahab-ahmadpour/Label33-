@@ -35,7 +35,10 @@ public class ProductCatalogQuery
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            query = query.Where(p => p.Name.Contains(term) || p.Slug.Contains(term));
+            query = query.Where(p =>
+                p.Name.Contains(term) ||
+                p.Slug.Contains(term) ||
+                (p.ShortDescription != null && p.ShortDescription.Contains(term)));
         }
 
         var products = await query.OrderByDescending(p => p.PublishedAtUtc).Take(100).ToListAsync(ct);

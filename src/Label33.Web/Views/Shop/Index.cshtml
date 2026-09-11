@@ -2,6 +2,7 @@
 @inject Label33.Web.Localization.IBrandLocalizer L
 @{
     var category = (ViewData["Category"] as string) ?? "ALL";
+    var query = (ViewData["Query"] as string) ?? "";
     string[] cats = ["ALL", "T-SHIRTS", "HOODIES", "SWEATSHIRTS", "JOGGERS"];
     string Label(string c) => c switch
     {
@@ -17,20 +18,33 @@
 <section class="container page-head">
     <div class="eyebrow">33label</div>
     <h1 class="display">@L["shop.title"]</h1>
+    @if (!string.IsNullOrWhiteSpace(query))
+    {
+        <p class="search-result-note">@L["search.resultsFor"] “@query”</p>
+    }
 </section>
 
 <section class="container">
+    <form class="shop-search" method="get" asp-controller="Shop" asp-action="Index" role="search">
+        @if (!string.Equals(category, "ALL", StringComparison.OrdinalIgnoreCase))
+        {
+            <input type="hidden" name="category" value="@category" />
+        }
+        <input type="search" name="q" value="@query" placeholder="@L["search.placeholder"]" />
+        <button class="btn btn--tan" type="submit">@L["nav.search"]</button>
+    </form>
+
     <div class="filters">
         @foreach (var c in cats)
         {
             <a class="@(string.Equals(category, c, StringComparison.OrdinalIgnoreCase) ? "is-active" : null)"
-               asp-controller="Shop" asp-action="Index" asp-route-category="@c">@Label(c)</a>
+               asp-controller="Shop" asp-action="Index" asp-route-category="@c" asp-route-q="@query">@Label(c)</a>
         }
     </div>
 
     @if (Model.Count == 0)
     {
-        <p>@L["shop.empty"]</p>
+        <p>@(string.IsNullOrWhiteSpace(query) ? L["shop.empty"] : L["search.empty"])</p>
     }
     else
     {

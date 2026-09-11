@@ -49,7 +49,10 @@ public static class BrandText
             ["account.password"] = "رمز عبور",
             ["footer.tag"] = "SAME CLOTHES. DIFFERENT MINDS.",
             ["intro.skip"] = "رد کردن",
-            ["common.from"] = "از"
+            ["common.from"] = "از",
+            ["search.placeholder"] = "جستجوی محصول…",
+            ["search.resultsFor"] = "نتایج برای",
+            ["search.empty"] = "چیزی با این جستجو پیدا نشد."
         },
         ["en"] = new()
         {
@@ -96,7 +99,10 @@ public static class BrandText
             ["account.password"] = "Password",
             ["footer.tag"] = "SAME CLOTHES. DIFFERENT MINDS.",
             ["intro.skip"] = "Skip",
-            ["common.from"] = "From"
+            ["common.from"] = "From",
+            ["search.placeholder"] = "Search products…",
+            ["search.resultsFor"] = "Results for",
+            ["search.empty"] = "No products matched your search."
         }
     };
 
