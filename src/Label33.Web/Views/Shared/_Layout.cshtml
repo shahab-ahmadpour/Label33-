@@ -81,6 +81,14 @@ DIFFERENT MINDS.</p>
 </header>
 
 <main>
+    @if (TempData["Error"] is string flashError)
+    {
+        <div class="container"><div class="flash flash--error" role="alert">@flashError</div></div>
+    }
+    @if (TempData["Ok"] is string flashOk)
+    {
+        <div class="container"><div class="flash flash--ok" role="status">@flashOk</div></div>
+    }
     @RenderBody()
 </main>
 

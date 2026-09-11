@@ -1,7 +1,30 @@
-@model string
-<section class="panel">
-    <h1 class="display">Thank you</h1>
-    <p>Payment verified for order reference:</p>
-    <p><code>@Model</code></p>
-    <a class="btn" asp-controller="Home" asp-action="Index">Home</a>
+@model Label33.Web.Controllers.PaymentCallbackVm
+@inject Label33.Web.Localization.IBrandLocalizer L
+
+<section class="panel payment-panel">
+    @if (Model.Succeeded)
+    {
+        <h1 class="display">@L["payment.success"]</h1>
+        @if (!string.IsNullOrWhiteSpace(Model.OrderNumber))
+        {
+            <p>@L["payment.orderNumber"]: <strong>@Model.OrderNumber</strong></p>
+        }
+        else
+        {
+            <p><code>@Model.ProviderRef</code></p>
+        }
+        <div class="payment-panel__actions">
+            <a class="btn" asp-controller="Account" asp-action="Index">@L["payment.viewOrder"]</a>
+            <a class="btn btn--ghost" asp-controller="Home" asp-action="Index">@L["payment.home"]</a>
+        </div>
+    }
+    else
+    {
+        <h1 class="display">@L["payment.failed"]</h1>
+        @if (!string.IsNullOrWhiteSpace(Model.Error))
+        {
+            <p class="flash flash--error">@Model.Error</p>
+        }
+        <a class="btn" asp-controller="Checkout" asp-action="Index">@L["checkout.title"]</a>
+    }
 </section>

@@ -1,6 +1,8 @@
 using Label33.Application.Carts;
 using Label33.Application.Catalog;
 using Label33.Application.Checkout;
+using Label33.Application.Common;
+using Label33.Application.Orders;
 using Label33.Application.Payments;
 using Label33.Domain.Entities;
 using Label33.Domain.Enums;
@@ -106,6 +108,8 @@ public class CartController : Controller
 
 public class CheckoutController : Controller
 {
+    public const decimal FlatShippingRials = 500_000m; // 50,000 Toman
+
     private readonly CartService _carts;
     private readonly CheckoutService _checkout;
     private readonly PaymentOrchestrator _payments;
@@ -121,6 +125,7 @@ public class CheckoutController : Controller
     public IActionResult Index()
     {
         ViewData["Title"] = "Checkout";
+        ViewData["ShippingRials"] = FlatShippingRials;
         return View();
     }
 
@@ -128,54 +133,92 @@ public class CheckoutController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Place(
-        string fullName, string phone, string province, string city, string postalCode, string line1, string? line2, string? couponCode,
+        string fullName,
+        string phone,
+        string province,
+        string city,
+        string postalCode,
+        string line1,
+        string? line2,
+        string? couponCode,
         CancellationToken ct)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var cart = await _carts.GetOrCreateAsync(userId, null, ct);
-        var result = await _checkout.CheckoutAsync(
-            cart.Id,
-            userId,
-            new CheckoutAddressDto(fullName, phone, province, city, postalCode, line1, line2),
-            couponCode,
-            shippingTotal: 0,
-            ct);
+        try
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var cart = await _carts.GetOrCreateAsync(userId, null, ct);
+            var result = await _checkout.CheckoutAsync(
+                cart.Id,
+                userId,
+                new CheckoutAddressDto(fullName, phone, province, city, postalCode, line1, line2),
+                couponCode,
+                shippingTotal: FlatShippingRials,
+                ct);
 
-        var callback = Url.Action("Callback", "Payments", null, Request.Scheme)!;
-        var payment = await _payments.StartAsync(result.OrderId, callback, ct);
-        if (!string.IsNullOrWhiteSpace(payment.RedirectUrl))
-            return Redirect(payment.RedirectUrl);
+            var callback = Url.Action("Callback", "Payments", null, Request.Scheme)!;
+            var payment = await _payments.StartAsync(result.OrderId, callback, ct);
+            if (!string.IsNullOrWhiteSpace(payment.RedirectUrl))
+                return Redirect(payment.RedirectUrl);
 
-        return RedirectToAction("Index", "Home");
+            TempData["Ok"] = result.OrderNumber;
+            return RedirectToAction("Callback", "Payments", new { providerRef = payment.ProviderRef });
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
 
 public class PaymentsController : Controller
 {
     private readonly PaymentOrchestrator _payments;
+    private readonly OrderQueryService _orders;
 
-    public PaymentsController(PaymentOrchestrator payments) => _payments = payments;
+    public PaymentsController(PaymentOrchestrator payments, OrderQueryService orders)
+    {
+        _payments = payments;
+        _orders = orders;
+    }
 
     [HttpGet]
     public async Task<IActionResult> Callback(string providerRef, CancellationToken ct)
     {
-        await _payments.VerifyAndCompleteAsync(providerRef, Request.QueryString.Value, ct);
-        ViewData["Title"] = "Paid";
-        return View("Callback", providerRef);
+        try
+        {
+            await _payments.VerifyAndCompleteAsync(providerRef, Request.QueryString.Value, ct);
+            var orderNumber = await _orders.GetOrderNumberByProviderRefAsync(providerRef, ct);
+            ViewData["Title"] = "Paid";
+            return View("Callback", new PaymentCallbackVm(true, orderNumber, providerRef));
+        }
+        catch (DomainException ex)
+        {
+            ViewData["Title"] = "Payment";
+            return View("Callback", new PaymentCallbackVm(false, null, providerRef, ex.Message));
+        }
     }
 }
+
+public sealed record PaymentCallbackVm(bool Succeeded, string? OrderNumber, string ProviderRef, string? Error = null);
 
 public class AccountController : Controller
 {
     private readonly SignInManager<ApplicationUser> _signIn;
     private readonly UserManager<ApplicationUser> _users;
     private readonly CartService _carts;
+    private readonly OrderQueryService _orders;
 
-    public AccountController(SignInManager<ApplicationUser> signIn, UserManager<ApplicationUser> users, CartService carts)
+    public AccountController(
+        SignInManager<ApplicationUser> signIn,
+        UserManager<ApplicationUser> users,
+        CartService carts,
+        OrderQueryService orders)
     {
         _signIn = signIn;
         _users = users;
         _carts = carts;
+        _orders = orders;
     }
 
     [HttpGet]
@@ -243,10 +286,23 @@ public class AccountController : Controller
     }
 
     [Authorize]
-    public IActionResult Index()
+    public async Task<IActionResult> Index(CancellationToken ct)
     {
         ViewData["Title"] = "Account";
-        return View();
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var orders = await _orders.ListForUserAsync(userId, ct);
+        return View(orders);
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> Order(Guid id, CancellationToken ct)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var order = await _orders.GetForUserAsync(id, userId, ct);
+        if (order is null) return NotFound();
+        ViewData["Title"] = order.OrderNumber;
+        return View(order);
     }
 
     [Authorize]

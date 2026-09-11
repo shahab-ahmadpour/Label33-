@@ -1,6 +1,9 @@
 @inject Label33.Web.Localization.IBrandLocalizer L
+@{
+    var shipping = (decimal)(ViewData["ShippingRials"] ?? 0m);
+}
 
-<section class="panel">
+<section class="panel checkout-panel">
     <h1 class="display">@L["checkout.title"]</h1>
 
     @if (User.Identity?.IsAuthenticated != true)
@@ -10,15 +13,55 @@
     }
     else
     {
-        <form asp-action="Place" method="post" class="stack" style="margin-top:1.25rem;">
+        <form asp-action="Place" method="post" class="stack checkout-form" style="margin-top:1.25rem;">
             @Html.AntiForgeryToken()
-            <div class="field"><label>Full name</label><input name="fullName" required /></div>
-            <div class="field"><label>Phone</label><input name="phone" required /></div>
-            <div class="field"><label>Province</label><input name="province" required /></div>
-            <div class="field"><label>City</label><input name="city" required /></div>
-            <div class="field"><label>Postal</label><input name="postalCode" required /></div>
-            <div class="field"><label>Address</label><input name="line1" required /></div>
-            <div class="field"><label>Coupon</label><input name="couponCode" /></div>
+            <div class="field">
+                <label for="fullName">@L["checkout.fullName"]</label>
+                <input id="fullName" name="fullName" required autocomplete="name" />
+            </div>
+            <div class="field">
+                <label for="phone">@L["checkout.phone"]</label>
+                <input id="phone" name="phone" required autocomplete="tel" />
+            </div>
+            <div class="checkout-form__row">
+                <div class="field">
+                    <label for="province">@L["checkout.province"]</label>
+                    <input id="province" name="province" required />
+                </div>
+                <div class="field">
+                    <label for="city">@L["checkout.city"]</label>
+                    <input id="city" name="city" required />
+                </div>
+            </div>
+            <div class="field">
+                <label for="postalCode">@L["checkout.postalCode"]</label>
+                <input id="postalCode" name="postalCode" required inputmode="numeric" />
+            </div>
+            <div class="field">
+                <label for="line1">@L["checkout.line1"]</label>
+                <input id="line1" name="line1" required autocomplete="street-address" />
+            </div>
+            <div class="field">
+                <label for="line2">@L["checkout.line2"]</label>
+                <input id="line2" name="line2" />
+            </div>
+            <div class="field">
+                <label for="couponCode">@L["checkout.coupon"]</label>
+                <input id="couponCode" name="couponCode" />
+            </div>
+
+            <div class="checkout-shipping">
+                <div class="eyebrow">@L["checkout.shipping"]</div>
+                <label class="checkout-shipping__option">
+                    <input type="radio" name="shippingMethod" value="flat" checked />
+                    <span>
+                        <strong>@L["checkout.shippingFlat"]</strong>
+                        <span class="checkout-shipping__cost">@L["checkout.shippingCost"]: @Money.FormatToman(shipping) @Money.DisplayUnit</span>
+                    </span>
+                </label>
+                <p class="checkout-hint">@L["checkout.subtotalHint"]</p>
+            </div>
+
             <button class="btn" type="submit">@L["checkout.pay"]</button>
         </form>
     }

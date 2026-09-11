@@ -1,0 +1,59 @@
+@model Label33.Domain.Entities.Order
+@inject Label33.Web.Localization.IBrandLocalizer L
+
+<section class="panel account-panel">
+    <header class="account-panel__head">
+        <div>
+            <div class="eyebrow">@L["account.orderDetail"]</div>
+            <h1 class="display">@Model.OrderNumber</h1>
+            <p class="account-order__meta">
+                <span class="ops-badge">@Model.Status</span>
+                · @Model.CreatedAtUtc.ToLocalTime().ToString("yyyy/MM/dd HH:mm")
+            </p>
+        </div>
+        <a class="btn btn--ghost" asp-action="Index">@L["account.back"]</a>
+    </header>
+
+    <div class="account-order-detail">
+        <table class="account-table">
+            <thead>
+                <tr>
+                    <th>@L["nav.shop"]</th>
+                    <th>@L["product.qty"]</th>
+                    <th>@L["account.orderTotal"]</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <strong>@item.ProductNameSnapshot</strong>
+                        <div class="account-order__meta">@item.VariantTitleSnapshot · @item.SkuSnapshot</div>
+                    </td>
+                    <td>@item.Quantity</td>
+                    <td>@Money.FormatToman(item.LineTotal) @Money.DisplayUnit</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+
+        <div class="account-totals">
+            <div><span>@L["checkout.shippingCost"]</span><strong>@Money.FormatToman(Model.ShippingTotal) @Money.DisplayUnit</strong></div>
+            <div><span>@L["account.orderTotal"]</span><strong>@Money.FormatToman(Model.GrandTotal) @Money.DisplayUnit</strong></div>
+        </div>
+
+        @if (Model.ShippingAddress is not null)
+        {
+            var a = Model.ShippingAddress;
+            <div class="account-address">
+                <div class="eyebrow">@L["checkout.line1"]</div>
+                <p>
+                    @a.FullName · @a.Phone<br />
+                    @a.Line1 @(string.IsNullOrWhiteSpace(a.Line2) ? "" : "· " + a.Line2)<br />
+                    @a.City · @a.Province · @a.PostalCode
+                </p>
+            </div>
+        }
+    </div>
+</section>

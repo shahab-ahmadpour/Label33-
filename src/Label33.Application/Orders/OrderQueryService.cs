@@ -20,6 +20,23 @@ public class OrderQueryService
             .Include(o => o.Shipments)
             .FirstOrDefaultAsync(o => o.Id == orderId, ct);
 
+    public async Task<Order?> GetForUserAsync(Guid orderId, Guid userId, CancellationToken ct = default)
+        => await _db.Orders
+            .AsNoTracking()
+            .Include(o => o.Items)
+            .Include(o => o.ShippingAddress)
+            .Include(o => o.Payments)
+            .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId, ct);
+
+    public async Task<string?> GetOrderNumberByProviderRefAsync(string providerRef, CancellationToken ct = default)
+    {
+        var tx = await _db.PaymentTransactions
+            .AsNoTracking()
+            .Include(p => p.Order)
+            .FirstOrDefaultAsync(p => p.ProviderRef == providerRef, ct);
+        return tx?.Order?.OrderNumber;
+    }
+
     public async Task<IReadOnlyList<Order>> ListForUserAsync(Guid userId, CancellationToken ct = default)
         => await _db.Orders
             .AsNoTracking()
