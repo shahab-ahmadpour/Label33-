@@ -25,15 +25,39 @@ Set-Location $Root
 Write-Host "==> Restoring..." -ForegroundColor Cyan
 dotnet restore Label33.sln | Out-Host
 
+function Ensure-DotnetEf {
+    $ef = Get-Command dotnet-ef -ErrorAction SilentlyContinue
+    if ($ef) { return }
+    Write-Host "==> Installing dotnet-ef tool..." -ForegroundColor Cyan
+    dotnet tool install -g dotnet-ef --version 8.0.11
+    if ($LASTEXITCODE -ne 0) {
+        dotnet tool update -g dotnet-ef --version 8.0.11
+    }
+    $tools = Join-Path $env:USERPROFILE ".dotnet\tools"
+    if ($env:PATH -notlike "*$tools*") {
+        $env:PATH = "$tools;$env:PATH"
+    }
+    if (-not (Get-Command dotnet-ef -ErrorAction SilentlyContinue)) {
+        throw "dotnet-ef still not found. Close PowerShell, reopen, then run: dotnet tool install -g dotnet-ef --version 8.0.11"
+    }
+}
+
 switch ($Mode) {
     'LocalDb' {
         $env:ASPNETCORE_ENVIRONMENT = 'Local'
         Write-Host "==> Mode: LocalDB + EF migrations" -ForegroundColor Cyan
+        Ensure-DotnetEf
         Write-Host "==> Applying migrations..." -ForegroundColor Cyan
         dotnet ef database update `
             --project src/Label33.Infrastructure `
             --startup-project src/Label33.Web
-        if ($LASTEXITCODE -ne 0) { throw "Migration failed. Is LocalDB installed? Try: sqllocaldb start MSSQLLocalDB" }
+        if ($LASTEXITCODE -ne 0) {
+            throw @"
+Migration failed.
+1) Confirm LocalDB: sqllocaldb start MSSQLLocalDB
+2) Confirm EF tool: dotnet ef --version
+"@
+        }
     }
     'DockerSql' {
         $env:ASPNETCORE_ENVIRONMENT = 'DockerSql'
@@ -45,6 +69,7 @@ switch ($Mode) {
         docker compose up -d sql
         Write-Host "==> Waiting for SQL Server..." -ForegroundColor Cyan
         Start-Sleep -Seconds 25
+        Ensure-DotnetEf
         $ok = $false
         for ($i = 1; $i -le 20; $i++) {
             try {

@@ -14,6 +14,19 @@ URLS="${URLS:-http://localhost:5072}"
 echo "==> Restoring..."
 dotnet restore Label33.sln
 
+ensure_dotnet_ef() {
+  if command -v dotnet-ef >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "==> Installing dotnet-ef tool..."
+  dotnet tool install -g dotnet-ef --version 8.0.11 || dotnet tool update -g dotnet-ef --version 8.0.11
+  export PATH="$HOME/.dotnet/tools:$PATH"
+  if ! command -v dotnet-ef >/dev/null 2>&1; then
+    echo "dotnet-ef not found. Run: dotnet tool install -g dotnet-ef --version 8.0.11"
+    exit 1
+  fi
+}
+
 case "$MODE" in
   sqlite|Sqlite|SQLITE)
     export ASPNETCORE_ENVIRONMENT=Development
@@ -31,6 +44,7 @@ case "$MODE" in
     docker compose up -d sql
     echo "==> Waiting for SQL Server..."
     sleep 25
+    ensure_dotnet_ef
     ok=0
     for i in $(seq 1 20); do
       if dotnet ef database update \
