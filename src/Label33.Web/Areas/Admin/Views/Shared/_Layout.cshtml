@@ -34,14 +34,19 @@
             {
                 <a href="/ops-33-console/team">Team</a>
             }
-            <a href="/ops-33-console/account/password">Password</a>
         </nav>
-        <div class="ops-top__user">
-            <span>@email</span>
-            <form action="/ops-33-console/logout" method="post">
-                @Html.AntiForgeryToken()
-                <button type="submit">Logout</button>
-            </form>
+        <div class="ops-user-menu" data-ops-user-menu>
+            <button type="button" class="ops-user-menu__btn" data-ops-user-toggle aria-expanded="false">
+                <span>@email</span>
+                <span class="ops-user-menu__chevron" aria-hidden="true">▾</span>
+            </button>
+            <div class="ops-user-menu__panel" hidden>
+                <a href="/ops-33-console/account/password">Change password</a>
+                <form action="/ops-33-console/logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit">Logout</button>
+                </form>
+            </div>
         </div>
     </header>
 }
@@ -56,5 +61,22 @@
     }
     @RenderBody()
 </main>
+<script>
+(() => {
+  const root = document.querySelector('[data-ops-user-menu]');
+  if (!root) return;
+  const btn = root.querySelector('[data-ops-user-toggle]');
+  const panel = root.querySelector('.ops-user-menu__panel');
+  const close = () => { panel.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = panel.hidden;
+    panel.hidden = !open;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  document.addEventListener('click', close);
+  panel.addEventListener('click', (e) => e.stopPropagation());
+})();
+</script>
 </body>
 </html>

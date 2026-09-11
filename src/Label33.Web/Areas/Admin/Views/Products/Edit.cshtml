@@ -1,15 +1,19 @@
 @model Label33.Application.Catalog.AdminProductDetailDto
+@using Label33.Application.Catalog
 @using Label33.Domain.Enums
 @{
     ViewData["Title"] = Model.Name;
+    var categories = ViewData["Categories"] as IReadOnlyList<CategoryDto> ?? Array.Empty<CategoryDto>();
+    var sizes = ViewData["Sizes"] as string[] ?? CatalogDefaults.Sizes;
+    var bySize = Model.Variants.ToDictionary(v => v.Title.ToUpperInvariant(), v => v, StringComparer.OrdinalIgnoreCase);
 }
 
 <section class="ops-page">
     <header class="ops-page__head">
         <div>
-            <div class="eyebrow">Catalog</div>
+            <div class="eyebrow">Warehouse</div>
             <h1>@Model.Name</h1>
-            <p class="ops-muted"><span class="ops-badge">@Model.Status</span> · @Model.Slug</p>
+            <p class="ops-muted"><span class="ops-badge">@Model.Status</span> · @(Model.CategoryName ?? "No category") · @Model.Slug</p>
         </div>
         <a class="btn btn--ghost" href="/ops-33-console/products">Back</a>
     </header>
@@ -23,11 +27,23 @@
                 <input name="name" value="@Model.Name" required />
             </label>
             <label>
-                <span>Category / short description</span>
-                <input name="shortDescription" value="@Model.ShortDescription" />
+                <span>Category</span>
+                <select name="categoryId" required>
+                    @foreach (var c in categories)
+                    {
+                        if (Model.CategoryId == c.Id)
+                        {
+                            <option value="@c.Id" selected>@c.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    }
+                </select>
             </label>
             <label>
-                <span>Full description</span>
+                <span>Description</span>
                 <textarea name="fullDescription" rows="5">@Model.FullDescription</textarea>
             </label>
             <label class="ops-check">
@@ -63,7 +79,6 @@
                         </form>
                     }
                 </div>
-                <p class="ops-muted">Published products with order history cannot be hard-deleted — archive them.</p>
             </div>
 
             <div class="ops-panel" style="margin-top:1rem">
@@ -83,7 +98,7 @@
                                     <form method="post" action="/ops-33-console/products/images/@img.Id/primary">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="productId" value="@Model.Id" />
-                                        <button type="submit" class="ops-link">Make primary</button>
+                                        <button type="submit" class="ops-link">Primary</button>
                                     </form>
                                 }
                                 <form method="post" action="/ops-33-console/products/images/@img.Id/delete" onsubmit="return confirm('Remove image?');">
@@ -98,16 +113,12 @@
                 <form method="post" action="/ops-33-console/products/@Model.Id/images" enctype="multipart/form-data" class="ops-form" style="margin-top:1rem">
                     @Html.AntiForgeryToken()
                     <label>
-                        <span>Upload image</span>
-                        <input type="file" name="file" accept="image/jpeg,image/png,image/webp,image/gif" required />
-                    </label>
-                    <label>
-                        <span>Alt text</span>
-                        <input name="altText" />
+                        <span>Upload images</span>
+                        <input type="file" name="files" accept="image/jpeg,image/png,image/webp,image/gif" multiple required />
                     </label>
                     <label class="ops-check">
                         <input type="checkbox" name="makePrimary" value="true" />
-                        <span>Set as primary</span>
+                        <span>First file as primary</span>
                     </label>
                     <button class="btn btn--tan" type="submit">Upload</button>
                 </form>
@@ -115,51 +126,38 @@
         </div>
     </div>
 
-    <div class="ops-panel" style="margin-top:1rem">
-        <div class="ops-panel__head"><h2>Variants & inventory</h2></div>
-        @foreach (var v in Model.Variants)
-        {
-            <div class="ops-variant-card">
-                <div class="ops-panel__head">
-                    <h2>@v.Sku</h2>
-                    <span class="ops-badge">@(v.IsActive ? "Active" : "Inactive")</span>
-                </div>
-                <form method="post" action="/ops-33-console/products/variants/@v.Id" class="ops-form ops-form__row">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="productId" value="@Model.Id" />
-                    <label>
-                        <span>Title</span>
-                        <input name="title" value="@v.Title" required />
-                    </label>
-                    <label>
-                        <span>Price (IRR)</span>
-                        <input name="price" type="number" min="0" step="1000" value="@v.BasePrice" required />
-                    </label>
+    <form method="post" action="/ops-33-console/products/@Model.Id/sizes" class="ops-form ops-panel" style="margin-top:1rem">
+        @Html.AntiForgeryToken()
+        <div class="ops-panel__head"><h2>Sizes & inventory</h2></div>
+        <p class="ops-muted">SKU prefix: <strong>@Model.SkuPrefix</strong> · Uncheck a size to deactivate it (not deleted).</p>
+        <label style="max-width:240px">
+            <span>Base / sync price (IRR)</span>
+            <input name="price" type="number" min="0" step="1000" value="@Model.BasePrice" required />
+        </label>
+        <div class="ops-size-grid">
+            @foreach (var size in sizes)
+            {
+                bySize.TryGetValue(size, out var variant);
+                var enabled = variant?.IsActive == true;
+                var stock = variant?.QuantityOnHand ?? 0;
+                var reserved = variant?.QuantityReserved ?? 0;
+                <div class="ops-size-card">
                     <label class="ops-check">
-                        <input type="checkbox" name="isActive" value="true" @(v.IsActive ? "checked" : null) />
-                        <span>Active</span>
+                        <input type="checkbox" name="sizeCodes" value="@size" @(enabled ? "checked" : null) />
+                        <strong>@size</strong>
                     </label>
-                    <button class="btn btn--ghost" type="submit">Save variant</button>
-                </form>
-
-                @if (v.StockMode == StockMode.Tracked)
-                {
-                    <form method="post" action="/ops-33-console/products/variants/@v.Id/stock" class="ops-form ops-form__row" style="margin-top:0.75rem">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="productId" value="@Model.Id" />
-                        <label>
-                            <span>On hand</span>
-                            <input name="quantityOnHand" type="number" min="0" value="@v.QuantityOnHand" required />
-                        </label>
-                        <p class="ops-muted">Reserved: @v.QuantityReserved · Available: @v.Available</p>
-                        <button class="btn btn--tan" type="submit">Update stock</button>
-                    </form>
-                }
-                else
-                {
-                    <p class="ops-muted">Unlimited stock mode.</p>
-                }
-            </div>
-        }
-    </div>
+                    @if (variant is not null)
+                    {
+                        <div class="ops-muted">@variant.Sku</div>
+                        <div class="ops-muted">Reserved @reserved · Avail @(variant.Available == int.MaxValue ? "∞" : variant.Available)</div>
+                    }
+                    <label>
+                        <span>On hand</span>
+                        <input name="stock_@size" type="number" min="0" value="@stock" />
+                    </label>
+                </div>
+            }
+        </div>
+        <button class="btn btn--tan" type="submit">Save sizes & stock</button>
+    </form>
 </section>

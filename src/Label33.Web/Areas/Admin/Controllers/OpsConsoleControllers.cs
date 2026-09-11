@@ -254,36 +254,93 @@ public class ProductsController : Controller
     public ProductsController(ProductAdminService admin) => _admin = admin;
 
     [HttpGet("")]
-    public async Task<IActionResult> Index(string? q, CancellationToken ct)
+    public async Task<IActionResult> Index(
+        string? q,
+        Guid? categoryId,
+        ProductStatus? status,
+        AdminProductSort sort = AdminProductSort.UpdatedDesc,
+        CancellationToken ct = default)
     {
-        var items = await _admin.ListAllAsync(q, ct);
+        ViewData["Categories"] = await _admin.ListCategoriesAsync(ct);
+        ViewData["Stats"] = await _admin.GetWarehouseStatsAsync(ct);
         ViewData["Q"] = q;
+        ViewData["CategoryId"] = categoryId;
+        ViewData["Status"] = status;
+        ViewData["Sort"] = sort;
+        var items = await _admin.ListAllAsync(q, categoryId, status, sort, ct);
         return View(items);
     }
 
     [HttpGet("create")]
-    public IActionResult Create() => View();
+    public async Task<IActionResult> Create(CancellationToken ct)
+    {
+        ViewData["Categories"] = await _admin.ListCategoriesAsync(ct);
+        ViewData["Sizes"] = CatalogDefaults.Sizes;
+        return View();
+    }
 
     [HttpPost("create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(string name, string category, string sku, decimal price, int stock, CancellationToken ct)
+    [RequestSizeLimit(20_000_000)]
+    public async Task<IActionResult> Create(
+        string name,
+        Guid categoryId,
+        string? fullDescription,
+        string skuPrefix,
+        decimal price,
+        bool isFeatured,
+        bool publish,
+        string[]? sizeCodes,
+        IFormCollection form,
+        List<IFormFile>? images,
+        CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(sku))
+        ViewData["Categories"] = await _admin.ListCategoriesAsync(ct);
+        ViewData["Sizes"] = CatalogDefaults.Sizes;
+
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(skuPrefix))
         {
-            ModelState.AddModelError(string.Empty, "Name and SKU are required.");
+            ModelState.AddModelError(string.Empty, "Name and SKU prefix are required.");
             return View();
+        }
+
+        var sizes = new List<SizeStockInput>();
+        foreach (var code in sizeCodes ?? Array.Empty<string>())
+        {
+            var key = $"stock_{code}";
+            var stock = 0;
+            if (form.ContainsKey(key))
+                _ = int.TryParse(form[key], out stock);
+            sizes.Add(new SizeStockInput(code, Math.Max(0, stock), price));
         }
 
         try
         {
-            var product = await _admin.CreateAsync(
-                name.Trim(),
-                string.IsNullOrWhiteSpace(category) ? null : category.Trim().ToUpperInvariant(),
+            var product = await _admin.CreateRichAsync(
+                name,
+                null,
+                fullDescription,
+                categoryId,
+                isFeatured,
                 ProductType.Physical,
-                [(sku.Trim().ToUpperInvariant(), "Default", price, StockMode.Tracked, Math.Max(0, stock))],
+                skuPrefix,
+                price,
+                sizes,
+                publish,
                 ct);
-            await _admin.PublishAsync(product.Id, ct);
-            TempData["Ok"] = "Product created and published.";
+
+            if (images is not null)
+            {
+                var first = true;
+                foreach (var file in images.Where(f => f.Length > 0))
+                {
+                    await using var stream = file.OpenReadStream();
+                    await _admin.AddImageAsync(product.Id, stream, file.FileName, file.ContentType, first, null, ct);
+                    first = false;
+                }
+            }
+
+            TempData["Ok"] = publish ? "Product created and published." : "Product draft created.";
             return Redirect($"/ops-33-console/products/{product.Id}");
         }
         catch (DomainException ex)
@@ -298,17 +355,56 @@ public class ProductsController : Controller
     {
         var product = await _admin.GetAdminAsync(id, ct);
         if (product is null) return NotFound();
+        ViewData["Categories"] = await _admin.ListCategoriesAsync(ct);
+        ViewData["Sizes"] = CatalogDefaults.Sizes;
         return View(product);
     }
 
     [HttpPost("{id:guid}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(Guid id, string name, string? shortDescription, string? fullDescription, bool isFeatured, CancellationToken ct)
+    public async Task<IActionResult> Edit(
+        Guid id,
+        string name,
+        string? fullDescription,
+        Guid categoryId,
+        bool isFeatured,
+        CancellationToken ct)
     {
         try
         {
-            await _admin.UpdateAsync(id, name, shortDescription, fullDescription, isFeatured, ct);
-            TempData["Ok"] = "Product saved.";
+            await _admin.UpdateDetailsAsync(id, name, fullDescription, isFeatured, categoryId, ct);
+            TempData["Ok"] = "Product details saved.";
+        }
+        catch (DomainException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+
+        return Redirect($"/ops-33-console/products/{id}");
+    }
+
+    [HttpPost("{id:guid}/sizes")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveSizes(
+        Guid id,
+        decimal price,
+        string[]? sizeCodes,
+        IFormCollection form,
+        CancellationToken ct)
+    {
+        var sizes = new List<SizeStockInput>();
+        foreach (var code in CatalogDefaults.Sizes)
+        {
+            var enabled = sizeCodes?.Contains(code, StringComparer.OrdinalIgnoreCase) == true;
+            var stock = 0;
+            _ = int.TryParse(form[$"stock_{code}"], out stock);
+            sizes.Add(new SizeStockInput(code, Math.Max(0, stock), price, enabled));
+        }
+
+        try
+        {
+            await _admin.SyncSizeMatrixAsync(id, price, sizes, ct);
+            TempData["Ok"] = "Sizes and inventory saved.";
         }
         catch (DomainException ex)
         {
@@ -369,46 +465,16 @@ public class ProductsController : Controller
         }
     }
 
-    [HttpPost("variants/{variantId:guid}")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateVariant(Guid variantId, Guid productId, string title, decimal price, bool isActive, CancellationToken ct)
-    {
-        try
-        {
-            await _admin.UpdateVariantAsync(variantId, title, price, isActive, ct);
-            TempData["Ok"] = "Variant updated.";
-        }
-        catch (DomainException ex)
-        {
-            TempData["Error"] = ex.Message;
-        }
-
-        return Redirect($"/ops-33-console/products/{productId}");
-    }
-
-    [HttpPost("variants/{variantId:guid}/stock")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SetStock(Guid variantId, Guid productId, int quantityOnHand, CancellationToken ct)
-    {
-        try
-        {
-            await _admin.SetInventoryAsync(variantId, quantityOnHand, ct);
-            TempData["Ok"] = "Inventory updated.";
-        }
-        catch (DomainException ex)
-        {
-            TempData["Error"] = ex.Message;
-        }
-
-        return Redirect($"/ops-33-console/products/{productId}");
-    }
-
     [HttpPost("{id:guid}/images")]
     [ValidateAntiForgeryToken]
-    [RequestSizeLimit(12_000_000)]
-    public async Task<IActionResult> UploadImage(Guid id, IFormFile? file, bool makePrimary, string? altText, CancellationToken ct)
+    [RequestSizeLimit(20_000_000)]
+    public async Task<IActionResult> UploadImage(Guid id, List<IFormFile>? files, IFormFile? file, bool makePrimary, string? altText, CancellationToken ct)
     {
-        if (file is null || file.Length == 0)
+        var uploads = new List<IFormFile>();
+        if (files is not null) uploads.AddRange(files.Where(f => f.Length > 0));
+        if (file is not null && file.Length > 0) uploads.Add(file);
+
+        if (uploads.Count == 0)
         {
             TempData["Error"] = "Choose an image file.";
             return Redirect($"/ops-33-console/products/{id}");
@@ -416,9 +482,14 @@ public class ProductsController : Controller
 
         try
         {
-            await using var stream = file.OpenReadStream();
-            await _admin.AddImageAsync(id, stream, file.FileName, file.ContentType, makePrimary, altText, ct);
-            TempData["Ok"] = "Image uploaded.";
+            var first = true;
+            foreach (var img in uploads)
+            {
+                await using var stream = img.OpenReadStream();
+                await _admin.AddImageAsync(id, stream, img.FileName, img.ContentType, makePrimary && first, altText, ct);
+                first = false;
+            }
+            TempData["Ok"] = uploads.Count == 1 ? "Image uploaded." : $"{uploads.Count} images uploaded.";
         }
         catch (DomainException ex)
         {

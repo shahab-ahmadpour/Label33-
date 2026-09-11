@@ -18,8 +18,13 @@ public class CatalogSeedService
 
     public async Task EnsureSeedAsync(CancellationToken ct = default)
     {
+        await _admin.EnsureCatalogDefaultsAsync(ct);
+
         if (await _db.Products.AnyAsync(ct))
             return;
+
+        var categories = await _admin.ListCategoriesAsync(ct);
+        var byName = categories.ToDictionary(c => c.Name, c => c.Id, StringComparer.OrdinalIgnoreCase);
 
         var samples = new (string Name, string Category, decimal Price)[]
         {
@@ -35,18 +40,24 @@ public class CatalogSeedService
 
         foreach (var sample in samples)
         {
+            byName.TryGetValue(sample.Category, out var categoryId);
             var sku = $"33-{sample.Category[..3]}-{Guid.NewGuid().ToString("N")[..4]}".ToUpperInvariant();
-            var product = await _admin.CreateAsync(
+            await _admin.CreateRichAsync(
                 sample.Name,
                 sample.Category,
+                null,
+                categoryId == Guid.Empty ? null : categoryId,
+                isFeatured: false,
                 ProductType.Physical,
+                sku,
+                sample.Price,
                 [
-                    (sku + "-M", "M", sample.Price, StockMode.Tracked, 25),
-                    (sku + "-L", "L", sample.Price, StockMode.Tracked, 25),
-                    (sku + "-XL", "XL", sample.Price, StockMode.Tracked, 15)
+                    new SizeStockInput("M", 25, sample.Price),
+                    new SizeStockInput("L", 25, sample.Price),
+                    new SizeStockInput("XL", 15, sample.Price)
                 ],
+                publish: true,
                 ct);
-            await _admin.PublishAsync(product.Id, ct);
         }
     }
 }

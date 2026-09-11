@@ -1,41 +1,91 @@
+@using Label33.Application.Catalog
+@using Label33.Domain.Enums
 @{
     ViewData["Title"] = "New product";
+    var categories = ViewData["Categories"] as IReadOnlyList<CategoryDto> ?? Array.Empty<CategoryDto>();
+    var sizes = ViewData["Sizes"] as string[] ?? CatalogDefaults.Sizes;
 }
 
 <section class="ops-page">
     <header class="ops-page__head">
         <div>
-            <div class="eyebrow">Catalog</div>
+            <div class="eyebrow">Warehouse</div>
             <h1>New product</h1>
+            <p class="ops-muted">Category, size matrix, stock per size, and images in one flow.</p>
         </div>
         <a class="btn btn--ghost" href="/ops-33-console/products">Back</a>
     </header>
 
-    <form method="post" action="/ops-33-console/products/create" class="ops-form ops-panel">
+    <form method="post" action="/ops-33-console/products/create" enctype="multipart/form-data" class="ops-form ops-panel">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="All" class="ops-errors"></div>
+
+        <div class="ops-panel__head"><h2>Basics</h2></div>
         <label>
             <span>Name</span>
-            <input name="name" required />
-        </label>
-        <label>
-            <span>Category (T-SHIRTS / HOODIES / …)</span>
-            <input name="category" placeholder="T-SHIRTS" />
-        </label>
-        <label>
-            <span>SKU</span>
-            <input name="sku" required placeholder="33-TEE-001" />
+            <input name="name" required placeholder="Everyday Tee 33" />
         </label>
         <div class="ops-form__row">
             <label>
-                <span>Price (IRR)</span>
-                <input name="price" type="number" min="0" step="1000" value="890000" required />
+                <span>Category</span>
+                <select name="categoryId" required>
+                    <option value="">Select category</option>
+                    @foreach (var c in categories)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
             </label>
             <label>
-                <span>Stock</span>
-                <input name="stock" type="number" min="0" value="20" required />
+                <span>SKU prefix</span>
+                <input name="skuPrefix" required placeholder="33-TEE-001" />
             </label>
         </div>
-        <button class="btn btn--tan" type="submit">Create & publish</button>
+        <label>
+            <span>Description</span>
+            <textarea name="fullDescription" rows="4" placeholder="Fabric, fit, care…"></textarea>
+        </label>
+        <div class="ops-form__row">
+            <label>
+                <span>Base price (IRR)</span>
+                <input name="price" type="number" min="0" step="1000" value="890000" required />
+            </label>
+            <label class="ops-check" style="align-self:end">
+                <input type="checkbox" name="isFeatured" value="true" />
+                <span>Featured</span>
+            </label>
+        </div>
+
+        <div class="ops-panel__head" style="margin-top:1.25rem"><h2>Sizes & stock</h2></div>
+        <p class="ops-muted">Enable each size and set on-hand quantity. SKU becomes PREFIX-SIZE.</p>
+        <div class="ops-size-grid">
+            @foreach (var size in sizes)
+            {
+                <div class="ops-size-card">
+                    <label class="ops-check">
+                        <input type="checkbox" name="sizeCodes" value="@size" @(size is "M" or "L" or "XL" ? "checked" : null) />
+                        <strong>@size</strong>
+                    </label>
+                    <label>
+                        <span>Stock</span>
+                        <input name="stock_@size" type="number" min="0" value="@(size == "XL" ? 15 : 25)" />
+                    </label>
+                </div>
+            }
+        </div>
+
+        <div class="ops-panel__head" style="margin-top:1.25rem"><h2>Images</h2></div>
+        <label>
+            <span>Upload images</span>
+            <input type="file" name="images" accept="image/jpeg,image/png,image/webp,image/gif" multiple />
+        </label>
+        <p class="ops-muted">First file becomes the primary image.</p>
+
+        <label class="ops-check">
+            <input type="checkbox" name="publish" value="true" checked />
+            <span>Publish immediately</span>
+        </label>
+
+        <button class="btn btn--tan" type="submit">Create product</button>
     </form>
 </section>
