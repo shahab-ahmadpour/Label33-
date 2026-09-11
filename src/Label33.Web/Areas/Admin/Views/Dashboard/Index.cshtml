@@ -1,0 +1,65 @@
+@using Label33.Domain.Entities
+@{
+    ViewData["Title"] = "Dashboard";
+    var productCount = (int)(ViewData["ProductCount"] ?? 0);
+    var orderCount = (int)(ViewData["OrderCount"] ?? 0);
+    var recent = ViewData["RecentOrders"] as IReadOnlyList<Order> ?? Array.Empty<Order>();
+}
+
+<section class="ops-page">
+    <header class="ops-page__head">
+        <div>
+            <div class="eyebrow">Overview</div>
+            <h1>Dashboard</h1>
+        </div>
+    </header>
+
+    <div class="ops-stats">
+        <article>
+            <div class="eyebrow">Published products</div>
+            <strong>@productCount</strong>
+        </article>
+        <article>
+            <div class="eyebrow">Recent orders loaded</div>
+            <strong>@orderCount</strong>
+        </article>
+        <article>
+            <div class="eyebrow">Console</div>
+            <strong>Live</strong>
+        </article>
+    </div>
+
+    <div class="ops-panel">
+        <div class="ops-panel__head">
+            <h2>Recent orders</h2>
+        </div>
+        @if (recent.Count == 0)
+        {
+            <p class="ops-muted">No orders yet.</p>
+        }
+        else
+        {
+            <table class="ops-table">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var o in recent)
+                {
+                    <tr>
+                        <td>@o.OrderNumber</td>
+                        <td>@o.Status</td>
+                        <td>@o.GrandTotal.ToString("N0")</td>
+                        <td>@o.CreatedAtUtc.ToString("u")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+</section>

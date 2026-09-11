@@ -4,6 +4,7 @@ using Label33.Infrastructure;
 using Label33.Infrastructure.Persistence;
 using Label33.Web.Localization;
 using Label33.Web.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,16 +16,50 @@ builder.Services.AddScoped<IBrandLocalizer, BrandLocalizer>();
 builder.Services.AddLabel33Application();
 builder.Services.AddLabel33Infrastructure(builder.Configuration);
 builder.Services.AddScoped<CatalogSeedService>();
+builder.Services.AddScoped<IdentitySeedService>();
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("OpsConsole", policy =>
+        policy.RequireRole(Label33Roles.Admin, Label33Roles.SuperAdmin));
+    options.AddPolicy("SuperAdminOnly", policy =>
+        policy.RequireRole(Label33Roles.SuperAdmin));
 });
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/Login";
+    options.Events.OnRedirectToLogin = context =>
+    {
+        var path = context.Request.Path;
+        if (path.StartsWithSegments("/ops-33-console"))
+        {
+            var returnUrl = context.Request.Path + context.Request.QueryString;
+            context.Response.Redirect("/ops-33-console/login?returnUrl=" + Uri.EscapeDataString(returnUrl));
+        }
+        else
+        {
+            context.Response.Redirect("/Account/Login?returnUrl=" + Uri.EscapeDataString(context.Request.Path + context.Request.QueryString));
+        }
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/ops-33-console"))
+            context.Response.Redirect("/ops-33-console/login");
+        else
+            context.Response.Redirect("/Account/Login");
+        return Task.CompletedTask;
+    };
+});
+
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Lockout.AllowedForNewUsers = true;
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(10);
+    options.Password.RequiredLength = 8;
 });
 
 builder.Services.AddLocalization();
@@ -38,7 +73,6 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     {
         new CookieRequestCultureProvider { CookieName = "label33.culture" },
         new QueryStringRequestCultureProvider()
-        // No Accept-Language fallback — site launches in English by default
     };
 });
 
@@ -69,9 +103,8 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "areas",
-    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
+// Obscure ops console only — do not expose /Admin/*
+app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",
@@ -83,7 +116,6 @@ using (var scope = app.Services.CreateScope())
     var provider = app.Configuration.GetValue<string>("Database:Provider") ?? "SqlServer";
     if (string.Equals(provider, "Sqlite", StringComparison.OrdinalIgnoreCase))
     {
-        // SQL Server migrations are not SQLite-compatible (nvarchar(max) etc.).
         await db.Database.EnsureCreatedAsync();
     }
     else
@@ -94,6 +126,9 @@ using (var scope = app.Services.CreateScope())
             app.Logger.LogWarning(ex, "Could not apply SQL Server migrations.");
         }
     }
+
+    var identitySeed = scope.ServiceProvider.GetRequiredService<IdentitySeedService>();
+    await identitySeed.EnsureSeedAsync();
 
     var seeder = scope.ServiceProvider.GetRequiredService<CatalogSeedService>();
     await seeder.EnsureSeedAsync();

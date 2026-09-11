@@ -26,4 +26,11 @@ public class OrderQueryService
             .OrderByDescending(o => o.CreatedAtUtc)
             .Take(50)
             .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Order>> ListRecentAsync(int take = 20, CancellationToken ct = default)
+        => await _db.Orders
+            .AsNoTracking()
+            .OrderByDescending(o => o.CreatedAtUtc)
+            .Take(Math.Clamp(take, 1, 100))
+            .ToListAsync(ct);
 }

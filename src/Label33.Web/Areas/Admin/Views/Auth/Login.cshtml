@@ -1,0 +1,28 @@
+@{
+    ViewData["Title"] = "Login";
+    ViewData["HideOpsNav"] = true;
+    Layout = "_Layout";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+<section class="ops-login">
+    <div class="ops-login__card">
+        <div class="ops-login__eyebrow">33 LABEL</div>
+        <h1>Ops Console</h1>
+        <p class="ops-login__hint">Authorized team access only.</p>
+
+        <form method="post" action="/ops-33-console/login" class="ops-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <div asp-validation-summary="All" class="ops-errors"></div>
+            <label>
+                <span>Email</span>
+                <input type="email" name="email" required autocomplete="username" />
+            </label>
+            <label>
+                <span>Password</span>
+                <input type="password" name="password" required autocomplete="current-password" />
+            </label>
+            <button class="btn btn--tan" type="submit">Sign in</button>
+        </form>
+    </div>
+</section>

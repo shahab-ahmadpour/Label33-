@@ -1,0 +1,58 @@
+@using System.Security.Claims
+@using Label33.Web.Services
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] ?? "Ops") · 33 Console</title>
+    <link rel="icon" href="~/brand/diyar/diyar-main.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/brand.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/ops-console.css" asp-append-version="true" />
+</head>
+<body class="ops-body">
+@{
+    var email = User.Identity?.IsAuthenticated == true ? User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name : null;
+    var isSuper = User.IsInRole(Label33Roles.SuperAdmin);
+}
+@if (!(ViewData["HideOpsNav"] as bool? ?? false))
+{
+    <header class="ops-top">
+        <div class="ops-top__brand">
+            <span class="ops-top__mark">33</span>
+            <span>Ops Console</span>
+        </div>
+        <nav class="ops-top__nav">
+            <a href="/ops-33-console">Dashboard</a>
+            <a href="/ops-33-console/products">Products</a>
+            @if (isSuper)
+            {
+                <a href="/ops-33-console/team">Team</a>
+            }
+        </nav>
+        <div class="ops-top__user">
+            <span>@email</span>
+            <form action="/ops-33-console/logout" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+    </header>
+}
+<main class="ops-main @(ViewData["HideOpsNav"] as bool? == true ? "ops-main--auth" : null)">
+    @if (TempData["Ok"] is string ok)
+    {
+        <div class="ops-flash ops-flash--ok">@ok</div>
+    }
+    @if (TempData["Error"] is string err)
+    {
+        <div class="ops-flash ops-flash--err">@err</div>
+    }
+    @RenderBody()
+</main>
+</body>
+</html>

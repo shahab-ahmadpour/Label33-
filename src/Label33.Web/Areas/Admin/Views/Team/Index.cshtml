@@ -1,0 +1,80 @@
+@model IReadOnlyList<Label33.Web.Areas.Admin.Controllers.TeamMemberVm>
+@using Label33.Web.Services
+@{
+    ViewData["Title"] = "Team";
+}
+
+<section class="ops-page">
+    <header class="ops-page__head">
+        <div>
+            <div class="eyebrow">Access</div>
+            <h1>Team</h1>
+        </div>
+    </header>
+
+    <div class="ops-grid-2">
+        <div class="ops-panel">
+            <div class="ops-panel__head"><h2>Console members</h2></div>
+            @if (Model.Count == 0)
+            {
+                <p class="ops-muted">No team members.</p>
+            }
+            else
+            {
+                <table class="ops-table">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var m in Model)
+                    {
+                        <tr>
+                            <td>@m.Email</td>
+                            <td>@(m.DisplayName ?? "—")</td>
+                            <td><span class="ops-badge">@m.Role</span></td>
+                            <td>
+                                <form method="post" action="/ops-33-console/team/remove" onsubmit="return confirm('Remove console access for this user?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@m.Id" />
+                                    <button type="submit" class="ops-link-danger">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <form method="post" action="/ops-33-console/team/create" class="ops-form ops-panel">
+            @Html.AntiForgeryToken()
+            <div class="ops-panel__head"><h2>Add member</h2></div>
+            <label>
+                <span>Email</span>
+                <input type="email" name="email" required />
+            </label>
+            <label>
+                <span>Display name</span>
+                <input name="displayName" />
+            </label>
+            <label>
+                <span>Password</span>
+                <input type="password" name="password" required minlength="8" />
+            </label>
+            <label>
+                <span>Role</span>
+                <select name="role">
+                    <option value="@Label33Roles.Admin">Admin</option>
+                    <option value="@Label33Roles.SuperAdmin">SuperAdmin</option>
+                </select>
+            </label>
+            <button class="btn btn--tan" type="submit">Create access</button>
+            <p class="ops-muted">Admins can manage catalog. Only SuperAdmin manages team.</p>
+        </form>
+    </div>
+</section>
