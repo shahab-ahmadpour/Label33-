@@ -27,10 +27,10 @@
   --accent: var(--tan);
   --accent-2: var(--olive);
 
-  --font-display: "Fraunces", "Dana", Georgia, serif;
-  --font-body: "Satoshi", "Dana", system-ui, sans-serif;
-  --font-fa: "Dana", "Satoshi", system-ui, sans-serif;
-  --font-ui: "Satoshi", "Dana", system-ui, sans-serif;
+  --font-display: "Fraunces", "Pelak", Georgia, serif;
+  --font-body: "Satoshi", "Pelak", system-ui, sans-serif;
+  --font-fa: "Pelak", "Satoshi", system-ui, sans-serif;
+  --font-ui: "Satoshi", "Pelak", system-ui, sans-serif;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -67,7 +67,7 @@ html[lang="fa"] .display,
 html[lang="fa"] h1,
 html[lang="fa"] h2,
 html[lang="fa"] h3 {
-  font-family: "Dana", var(--font-display);
+  font-family: "Pelak", var(--font-display);
   font-weight: 600;
 }
 
