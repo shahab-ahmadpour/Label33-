@@ -35,34 +35,50 @@ public class IdentitySeedService
         await EnsureRoleAsync(Label33Roles.SuperAdmin);
         await EnsureRoleAsync(Label33Roles.Admin);
 
-        var email = _config["OpsConsole:SuperAdminEmail"] ?? "superadmin@33label.local";
-        var password = _config["OpsConsole:SuperAdminPassword"] ?? "ChangeMe_33Label!";
+        var email = _config["OpsConsole:SuperAdminEmail"];
+        var password = _config["OpsConsole:SuperAdminPassword"];
         var displayName = _config["OpsConsole:SuperAdminDisplayName"] ?? "Super Admin";
 
-        var user = await _users.FindByEmailAsync(email);
-        if (user is null)
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
-            user = new ApplicationUser
-            {
-                UserName = email,
-                Email = email,
-                EmailConfirmed = true,
-                DisplayName = displayName
-            };
-
-            var create = await _users.CreateAsync(user, password);
-            if (!create.Succeeded)
-            {
-                _logger.LogError("Failed to create SuperAdmin: {Errors}",
-                    string.Join("; ", create.Errors.Select(e => e.Description)));
-                return;
-            }
-
-            _logger.LogInformation("Seeded SuperAdmin user {Email}", email);
+            _logger.LogWarning(
+                "OpsConsole SuperAdmin seed skipped: set OpsConsole:SuperAdminEmail and OpsConsole:SuperAdminPassword (env/config).");
+            return;
         }
 
-        if (!await _users.IsInRoleAsync(user, Label33Roles.SuperAdmin))
-            await _users.AddToRoleAsync(user, Label33Roles.SuperAdmin);
+        var user = await _users.FindByEmailAsync(email);
+        if (user is not null)
+        {
+            // Do not auto-promote an existing account (e.g. storefront customer) and do not
+            // restore SuperAdmin after Team → Remove. Bootstrap only creates the first user.
+            if (!await _users.IsInRoleAsync(user, Label33Roles.SuperAdmin)
+                && !await _users.IsInRoleAsync(user, Label33Roles.Admin))
+            {
+                _logger.LogWarning(
+                    "OpsConsole seed email {Email} already exists without console roles; not promoting.",
+                    email);
+            }
+            return;
+        }
+
+        user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+            DisplayName = displayName
+        };
+
+        var create = await _users.CreateAsync(user, password);
+        if (!create.Succeeded)
+        {
+            _logger.LogError("Failed to create SuperAdmin: {Errors}",
+                string.Join("; ", create.Errors.Select(e => e.Description)));
+            return;
+        }
+
+        await _users.AddToRoleAsync(user, Label33Roles.SuperAdmin);
+        _logger.LogInformation("Seeded SuperAdmin user {Email}", email);
     }
 
     private async Task EnsureRoleAsync(string roleName)
