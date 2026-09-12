@@ -482,6 +482,13 @@ html[dir="rtl"] .intro__copy .tag {
   color: var(--ink);
 }
 
+html[dir="rtl"] .hero-home__title {
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.15;
+  font-size: clamp(2.2rem, 5.8vw, 4.4rem);
+}
+
 .hero-home__title .line { display: block; }
 
 .hero-home__support {
