@@ -183,28 +183,30 @@ button, input, select { font: inherit; color: inherit; }
 }
 
 .nav__brand-word {
-  font-family: var(--font-display);
-  font-size: 1.65rem;
-  line-height: 1;
-  letter-spacing: -0.04em;
+  font-family: var(--font-ui);
+  font-size: 1.85rem;
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: -0.05em;
   font-variant-numeric: lining-nums;
 }
 
 .nav__links {
   display: flex;
-  gap: 1.6rem;
+  gap: 1.75rem;
   justify-content: center;
   list-style: none;
   margin: 0;
   padding: 0;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  font-size: 0.86rem;
+  font-weight: 500;
   font-family: var(--font-ui);
 }
 
 .nav__links a {
-  opacity: 0.72;
+  opacity: 0.82;
   transition: opacity 0.25s var(--ease);
 }
 
@@ -244,7 +246,8 @@ button, input, select { font: inherit; color: inherit; }
   padding: 0.25rem 0.35rem;
   color: var(--muted);
   letter-spacing: 0.12em;
-  font-size: 0.68rem;
+  font-size: 0.8rem;
+  font-weight: 500;
   font-family: var(--font-ui);
 }
 
@@ -344,8 +347,10 @@ button, input, select { font: inherit; color: inherit; }
 }
 
 .intro__copy .brand-num {
-  font-family: var(--font-display);
-  font-size: clamp(3rem, 10vw, 7rem);
+  font-family: var(--font-ui);
+  font-size: clamp(4rem, 10vw, 7rem);
+  font-weight: 700;
+  line-height: 0.85;
   margin: 0;
   letter-spacing: -0.05em;
   font-variant-numeric: lining-nums;
@@ -1085,11 +1090,13 @@ html[dir="rtl"] .hero-home__bird {
 .site-footer__brand { display: grid; gap: 0.15rem; align-content: start; }
 
 .site-footer__num {
+  font-family: var(--font-ui);
   font-size: clamp(4rem, 10vw, 7rem);
   line-height: 0.85;
   font-weight: 700;
   letter-spacing: -0.05em;
   color: var(--cream);
+  font-variant-numeric: lining-nums;
 }
 
 .site-footer__tag,
