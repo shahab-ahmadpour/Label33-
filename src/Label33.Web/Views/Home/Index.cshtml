@@ -11,8 +11,10 @@
             <span>/ since 2026</span>
         </div>
         <h1 class="hero-home__title">
-            <span class="line">SAME CLOTHES.</span>
-            <span class="line">DIFFERENT MINDS.</span>
+            @foreach (var line in L["hero.tagline"].Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            {
+                <span class="line">@line</span>
+            }
         </h1>
         <p class="hero-home__support">@L["hero.support"]</p>
         <div class="hero-home__cta">

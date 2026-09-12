@@ -14,7 +14,7 @@ public static class BrandText
             ["nav.account"] = "حساب",
             ["nav.cart"] = "سبد",
             ["nav.login"] = "ورود",
-            ["hero.tagline"] = "SAME CLOTHES.\nDIFFERENT MINDS.",
+            ["hero.tagline"] = "همان لباس‌ها.\nذهن‌های متفاوت.",
             ["hero.support"] = "یونیفرم برای ذهن‌های منفرد. طراحی‌شده در ایران، ساخته‌شده برای فراتر از مرزها.",
             ["hero.cta.shop"] = "مشاهده کالکشن",
             ["hero.cta.diyar"] = "آشنایی با دیار",

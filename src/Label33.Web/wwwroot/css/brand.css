@@ -523,16 +523,16 @@ html[dir="rtl"] .hero-home__scroll {
 
 .hero-home__gold {
   position: absolute;
-  top: 11%;
-  right: 12%;
-  width: clamp(4.75rem, 11vw, 7.25rem);
-  height: clamp(4.75rem, 11vw, 7.25rem);
+  top: 10%;
+  right: 11%;
+  width: clamp(5.75rem, 13vw, 8.75rem);
+  height: clamp(5.75rem, 13vw, 8.75rem);
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #f0d06a 0%, var(--gold) 55%, #c99620 100%);
+  background: radial-gradient(circle at 35% 30%, #d8b84a 0%, #c4a035 52%, #a88628 100%);
   box-shadow:
-    0 0 18px 6px color-mix(in srgb, var(--gold) 55%, transparent),
-    0 0 42px 16px color-mix(in srgb, var(--gold) 35%, transparent),
-    0 0 80px 28px color-mix(in srgb, var(--gold) 18%, transparent);
+    0 0 20px 7px color-mix(in srgb, #c4a035 58%, transparent),
+    0 0 48px 18px color-mix(in srgb, #c4a035 36%, transparent),
+    0 0 90px 32px color-mix(in srgb, #c4a035 18%, transparent);
 }
 
 html[dir="rtl"] .hero-home__gold {
@@ -556,6 +556,7 @@ html[dir="rtl"] .hero-home__gold {
 
 html[dir="rtl"] .hero-home__bird {
   left: 39%;
+  transform: scaleX(-1);
 }
 
 @media (max-width: 900px) {
