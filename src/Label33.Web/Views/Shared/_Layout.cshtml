@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@(ViewData["DocumentTitle"] as string ?? (ViewData["Title"] != null ? $"{ViewData["Title"]} — 33" : "33"))</title>
-    <link rel="icon" href="~/brand/diyar/diyar-main.png" />
+    <link rel="icon" href="~/brand/logo/33-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&display=swap" rel="stylesheet" />
@@ -27,9 +27,8 @@
             </div>
         </div>
         <div class="intro__copy">
-            <p class="brand-num">33</p>
-            <p class="tag">SAME CLOTHES.
-DIFFERENT MINDS.</p>
+            <img class="intro__mark" src="~/brand/logo/33-mark.png" alt="33" width="650" height="510" />
+            <p class="tag">@L["intro.tagline"]</p>
         </div>
         <button type="button" class="intro__skip" id="intro-skip">@L["intro.skip"]</button>
     </div>
@@ -38,8 +37,7 @@ DIFFERENT MINDS.</p>
 <header class="site-header">
     <div class="container nav" id="site-nav">
         <a class="nav__brand" asp-controller="Home" asp-action="Index" aria-label="33 Label">
-            <span class="nav__brand-word">33</span>
-            <img src="~/brand/diyar/diyar-mark.png" alt="" width="28" height="28" />
+            <img class="nav__brand-mark" src="~/brand/logo/33-mark.png" alt="33" width="120" height="94" />
         </a>
 
         <button class="nav__burger" id="nav-burger" type="button" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -96,7 +94,7 @@ DIFFERENT MINDS.</p>
     <div class="container">
         <div class="site-footer__top">
             <div class="site-footer__brand">
-                <div class="site-footer__num">33</div>
+                <img class="site-footer__mark" src="~/brand/logo/33-mark-cream.png" alt="33" width="320" height="250" />
                 <div class="site-footer__tag">@L["footer.tag"]</div>
                 <div class="site-footer__since">since 2026</div>
             </div>

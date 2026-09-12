@@ -36,6 +36,13 @@
   color: #c7b597;
 }
 
+.ops-top__mark-img {
+  display: block;
+  height: 1.55rem;
+  width: auto;
+  object-fit: contain;
+}
+
 .ops-top__nav {
   display: flex;
   gap: 1.25rem;
@@ -242,6 +249,16 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   font-size: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.ops-login__mark {
+  display: block;
+  height: 2.4rem;
+  width: auto;
+  object-fit: contain;
 }
 
 .ops-login h1 {

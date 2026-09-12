@@ -176,19 +176,35 @@ button, input, select { font: inherit; color: inherit; }
   font-weight: 600;
 }
 
-.nav__brand img {
-  width: 1.65rem;
-  height: 1.65rem;
+.nav__brand-mark {
+  display: block;
+  width: auto;
+  height: 2.35rem;
   object-fit: contain;
 }
 
-.nav__brand-word {
-  font-family: var(--font-ui);
-  font-size: 1.85rem;
-  font-weight: 700;
-  line-height: 0.85;
-  letter-spacing: -0.05em;
-  font-variant-numeric: lining-nums;
+.nav__brand img {
+  width: auto;
+  height: 2.35rem;
+  object-fit: contain;
+}
+
+.brand-mark {
+  display: inline-block;
+  width: auto;
+  height: 1.15rem;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.brand-mark--eyebrow {
+  height: 1.35rem;
+}
+
+.eyebrow-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .nav__links {
@@ -341,9 +357,22 @@ button, input, select { font: inherit; color: inherit; }
 .intro__copy {
   text-align: center;
   opacity: 0;
-  animation: fade-up 1.2s var(--ease) 3.1s forwards;
+  animation: fade-up 1.2s var(--ease) 2.4s forwards;
   z-index: 2;
-  margin-top: 18vh;
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 1.35rem;
+  padding: 0 1.25rem;
+  max-width: min(92vw, 52rem);
+}
+
+.intro__mark {
+  display: block;
+  width: min(84vw, 34rem);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 40px color-mix(in srgb, var(--ink) 12%, transparent));
 }
 
 .intro__copy .brand-num {
@@ -357,13 +386,16 @@ button, input, select { font: inherit; color: inherit; }
 }
 
 .intro__copy .tag {
-  margin: 0.75rem 0 0;
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  font-size: 0.78rem;
-  white-space: pre-line;
-  color: var(--muted);
-  font-family: var(--font-ui);
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0.04em;
+  font-size: clamp(1.05rem, 2.6vw, 1.55rem);
+  line-height: 1.35;
+  max-width: 22ch;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 500;
+  white-space: normal;
 }
 
 .intro__skip {
@@ -391,7 +423,8 @@ button, input, select { font: inherit; color: inherit; }
     width: min(58vw, 220px);
     max-height: 32vh;
   }
-  .intro__copy { margin-top: 14vh; }
+  .intro__copy { margin: 0; }
+  .intro__mark { width: min(86vw, 24rem); }
 }
 
 /* Home hero — split cream / forest */
@@ -422,6 +455,9 @@ button, input, select { font: inherit; color: inherit; }
   font-size: 0.72rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
 }
 
 .hero-home__title {
@@ -621,6 +657,28 @@ html[dir="rtl"] .hero-home__bird {
 
 .band--tan {
   background: var(--tan);
+  color: var(--ink);
+}
+
+.band--ember {
+  background: var(--ember);
+  color: var(--ink);
+}
+
+.band--ember .eyebrow {
+  color: color-mix(in srgb, var(--ink) 72%, transparent);
+}
+
+.band-manifesto {
+  display: grid;
+  gap: 1rem;
+  max-width: 42rem;
+  justify-items: start;
+}
+
+.band-manifesto__title {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  margin: 0;
   color: var(--ink);
 }
 
@@ -1088,6 +1146,14 @@ html[dir="rtl"] .hero-home__bird {
 }
 
 .site-footer__brand { display: grid; gap: 0.15rem; align-content: start; }
+
+.site-footer__mark {
+  display: block;
+  width: min(42vw, 11.5rem);
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 0.35rem;
+}
 
 .site-footer__num {
   font-family: var(--font-ui);
