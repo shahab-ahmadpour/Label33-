@@ -10,6 +10,7 @@ using Label33.Domain.Enums;
 using Label33.Infrastructure.Identity;
 using Label33.Infrastructure.Payments;
 using Label33.Infrastructure.Persistence;
+using Label33.Infrastructure.Storage;
 using Label33.Infrastructure.Time;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -42,7 +43,7 @@ public class CheckoutPaymentFlowTests : IAsyncLifetime
         var coupons = new CouponService(_db, _clock);
         _checkout = new CheckoutService(_db, _clock, new OrderNumberGenerator(_db), _inventory, coupons);
         var fulfillment = new FulfillmentService(_db, _clock);
-        _payments = new PaymentOrchestrator(_db, new MockPaymentGateway(), _clock, _inventory, fulfillment);
+        _payments = new PaymentOrchestrator(_db, new MockPaymentGateway(), _clock, _inventory, fulfillment, new NullEmailSender());
         _admin = new ProductAdminService(_db, _clock, new StubFileStorage());
     }
 
