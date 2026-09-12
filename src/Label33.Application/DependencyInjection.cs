@@ -1,3 +1,4 @@
+using Label33.Application.Auth;
 using Label33.Application.Carts;
 using Label33.Application.Catalog;
 using Label33.Application.Checkout;
@@ -29,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<ReviewService>();
         services.AddScoped<OrderQueryService>();
         services.AddScoped<OrderAdminService>();
+        services.AddScoped<PhoneOtpService>();
         return services;
     }
 }

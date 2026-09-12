@@ -2,6 +2,7 @@ using Label33.Application.Abstractions;
 using Label33.Infrastructure.Identity;
 using Label33.Infrastructure.Payments;
 using Label33.Infrastructure.Persistence;
+using Label33.Infrastructure.Sms;
 using Label33.Infrastructure.Storage;
 using Label33.Infrastructure.Time;
 using Label33.Infrastructure.Workers;
@@ -37,7 +38,8 @@ public static class DependencyInjection
                 options.Password.RequiredLength = 6;
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequireUppercase = false;
-                options.User.RequireUniqueEmail = true;
+                // Storefront OTP users may have no email.
+                options.User.RequireUniqueEmail = false;
             })
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
@@ -54,6 +56,18 @@ public static class DependencyInjection
         var storageRoot = configuration.GetValue<string>("Storage:Root")
             ?? Path.Combine(AppContext.BaseDirectory, "App_Data", "files");
         services.AddSingleton<IFileStorage>(_ => new LocalFileStorage(storageRoot));
+
+        services.Configure<SmsOptions>(configuration.GetSection(SmsOptions.SectionName));
+        var smsProvider = configuration.GetValue<string>("Sms:Provider") ?? "Development";
+        if (string.Equals(smsProvider, "Kavenegar", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddHttpClient<KavenegarSmsSender>();
+            services.AddScoped<ISmsSender>(sp => sp.GetRequiredService<KavenegarSmsSender>());
+        }
+        else
+        {
+            services.AddSingleton<ISmsSender, DevelopmentSmsSender>();
+        }
 
         services.AddHostedService<ReservationCleanupWorker>();
 

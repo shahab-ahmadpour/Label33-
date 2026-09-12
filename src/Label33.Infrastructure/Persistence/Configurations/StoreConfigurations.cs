@@ -321,3 +321,16 @@ public class CouponRedemptionConfiguration : IEntityTypeConfiguration<CouponRede
         b.HasIndex(x => new { x.CouponId, x.OrderId }).IsUnique();
     }
 }
+
+public class SmsOtpChallengeConfiguration : IEntityTypeConfiguration<SmsOtpChallenge>
+{
+    public void Configure(EntityTypeBuilder<SmsOtpChallenge> b)
+    {
+        b.Property(x => x.PhoneE164).HasMaxLength(20).IsRequired();
+        b.Property(x => x.CodeHash).HasMaxLength(128).IsRequired();
+        b.Property(x => x.Purpose).HasMaxLength(32).IsRequired();
+        b.Property(x => x.RequestIp).HasMaxLength(64);
+        b.HasIndex(x => new { x.PhoneE164, x.Purpose, x.CreatedAtUtc });
+        b.HasIndex(x => x.ExpiresAtUtc);
+    }
+}

@@ -49,6 +49,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<PageViewLog> PageViewLogs => Set<PageViewLog>();
     public DbSet<OnlineUser> OnlineUsers => Set<OnlineUser>();
+    public DbSet<SmsOtpChallenge> SmsOtpChallenges => Set<SmsOtpChallenge>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

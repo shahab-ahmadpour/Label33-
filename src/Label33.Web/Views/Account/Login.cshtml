@@ -1,14 +1,100 @@
+@model Label33.Web.Controllers.OtpLoginVm
 @inject Label33.Web.Localization.IBrandLocalizer L
+@{
+    var step = (ViewData["OtpStep"] as string) ?? "phone";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+    var devCode = ViewData["DevCode"] as string;
+    var resendAfter = ViewData["ResendAfter"] as int? ?? 60;
+    var phoneValue = Model?.PhoneE164 ?? Model?.Phone;
+}
 
-<section class="panel">
+<section class="panel otp-login">
     <h1 class="display">@L["account.login"]</h1>
-    <form asp-action="Login" method="post" class="stack" style="margin-top:1rem;">
-        @Html.AntiForgeryToken()
-        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
-        <div asp-validation-summary="All"></div>
-        <div class="field"><label>@L["account.email"]</label><input type="email" name="email" required /></div>
-        <div class="field"><label>@L["account.password"]</label><input type="password" name="password" required /></div>
-        <button class="btn" type="submit">@L["account.login"]</button>
-    </form>
-    <p style="margin-top:1rem;"><a asp-action="Register">@L["account.register"]</a></p>
+    <p class="otp-login__lead">@L["account.otp.lead"]</p>
+
+    <div asp-validation-summary="All" class="otp-login__errors"></div>
+
+    @if (step != "code")
+    {
+        <form asp-action="RequestOtp" method="post" class="stack otp-login__form" style="margin-top:1.25rem;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <div class="field">
+                <label for="phone">@L["account.phone"]</label>
+                <input id="phone"
+                       name="phone"
+                       type="tel"
+                       inputmode="numeric"
+                       autocomplete="tel"
+                       placeholder="0912xxxxxxx"
+                       value="@Model?.Phone"
+                       required />
+            </div>
+            <button class="btn" type="submit">@L["account.otp.send"]</button>
+        </form>
+    }
+    else
+    {
+        <form asp-action="VerifyOtp" method="post" class="stack otp-login__form" style="margin-top:1.25rem;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <input type="hidden" name="phone" value="@phoneValue" />
+
+            <div class="otp-login__sent">
+                @L["account.otp.sentTo"] <strong>@(Model?.Phone ?? phoneValue)</strong>
+            </div>
+
+            <div class="field">
+                <label for="code">@L["account.otp.code"]</label>
+                <input id="code"
+                       name="code"
+                       type="text"
+                       inputmode="numeric"
+                       autocomplete="one-time-code"
+                       maxlength="8"
+                       class="otp-login__code"
+                       required />
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(devCode))
+            {
+                <div class="otp-login__dev">
+                    @L["account.otp.devHint"]: <code>@devCode</code>
+                </div>
+            }
+
+            <button class="btn" type="submit">@L["account.otp.verify"]</button>
+        </form>
+
+        <form asp-action="RequestOtp" method="post" class="otp-login__resend" style="margin-top:1rem;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <input type="hidden" name="phone" value="@phoneValue" />
+            <button class="btn btn--ghost" type="submit" id="otp-resend" data-wait="@resendAfter">
+                @L["account.otp.resend"]
+            </button>
+        </form>
+    }
 </section>
+
+<script>
+(() => {
+  const btn = document.getElementById('otp-resend');
+  if (!btn) return;
+  let wait = Number(btn.dataset.wait || 0);
+  if (!wait || wait < 1) return;
+  const label = btn.textContent;
+  btn.disabled = true;
+  const tick = () => {
+    if (wait <= 0) {
+      btn.disabled = false;
+      btn.textContent = label;
+      return;
+    }
+    btn.textContent = label + ' (' + wait + ')';
+    wait -= 1;
+    setTimeout(tick, 1000);
+  };
+  tick();
+})();
+</script>

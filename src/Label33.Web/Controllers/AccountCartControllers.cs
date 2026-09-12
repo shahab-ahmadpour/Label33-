@@ -1,3 +1,4 @@
+using Label33.Application.Auth;
 using Label33.Application.Carts;
 using Label33.Application.Catalog;
 using Label33.Application.Checkout;
@@ -10,6 +11,7 @@ using Label33.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace Label33.Web.Controllers;
@@ -259,17 +261,20 @@ public class AccountController : Controller
     private readonly UserManager<ApplicationUser> _users;
     private readonly CartService _carts;
     private readonly OrderQueryService _orders;
+    private readonly PhoneOtpService _otp;
 
     public AccountController(
         SignInManager<ApplicationUser> signIn,
         UserManager<ApplicationUser> users,
         CartService carts,
-        OrderQueryService orders)
+        OrderQueryService orders,
+        PhoneOtpService otp)
     {
         _signIn = signIn;
         _users = users;
         _carts = carts;
         _orders = orders;
+        _otp = otp;
     }
 
     [HttpGet]
@@ -277,26 +282,81 @@ public class AccountController : Controller
     {
         ViewData["Title"] = "Login";
         ViewData["ReturnUrl"] = returnUrl;
-        return View();
+        ViewData["OtpStep"] = "phone";
+        return View(new OtpLoginVm());
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(string email, string password, string? returnUrl = null)
+    public async Task<IActionResult> RequestOtp(string phone, string? returnUrl = null, CancellationToken ct = default)
     {
-        var user = await _users.FindByEmailAsync(email);
-        if (user is null)
-        {
-            ModelState.AddModelError(string.Empty, "Invalid login.");
-            return View();
-        }
+        ViewData["Title"] = "Login";
+        ViewData["ReturnUrl"] = returnUrl;
 
-        var result = await _signIn.PasswordSignInAsync(user, password, isPersistent: true, lockoutOnFailure: false);
+        var result = await _otp.SendLoginCodeAsync(phone, HttpContext.Connection.RemoteIpAddress?.ToString(), ct);
         if (!result.Succeeded)
         {
-            ModelState.AddModelError(string.Empty, "Invalid login.");
-            return View();
+            ViewData["OtpStep"] = "phone";
+            ModelState.AddModelError(string.Empty, MapOtpError(result.Error));
+            return View("Login", new OtpLoginVm { Phone = phone });
         }
+
+        ViewData["OtpStep"] = "code";
+        ViewData["DevCode"] = result.DevCode;
+        ViewData["ResendAfter"] = result.ResendAfterSeconds;
+        return View("Login", new OtpLoginVm
+        {
+            Phone = IranianPhone.ToLocalDisplay(IranianPhone.NormalizeToE164(phone)!),
+            PhoneE164 = IranianPhone.NormalizeToE164(phone)
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> VerifyOtp(string phone, string code, string? returnUrl = null, CancellationToken ct = default)
+    {
+        ViewData["Title"] = "Login";
+        ViewData["ReturnUrl"] = returnUrl;
+
+        var verified = await _otp.VerifyLoginCodeAsync(phone, code, ct);
+        if (!verified.Succeeded || string.IsNullOrWhiteSpace(verified.PhoneE164))
+        {
+            ViewData["OtpStep"] = "code";
+            ModelState.AddModelError(string.Empty, MapOtpError(verified.Error));
+            return View("Login", new OtpLoginVm
+            {
+                Phone = IranianPhone.ToLocalDisplay(IranianPhone.NormalizeToE164(phone) ?? phone),
+                PhoneE164 = IranianPhone.NormalizeToE164(phone)
+            });
+        }
+
+        var phoneE164 = verified.PhoneE164;
+        var user = await _users.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phoneE164);
+        if (user is null)
+        {
+            user = new ApplicationUser
+            {
+                UserName = phoneE164,
+                PhoneNumber = phoneE164,
+                PhoneNumberConfirmed = true,
+                DisplayName = IranianPhone.ToLocalDisplay(phoneE164)
+            };
+            var create = await _users.CreateAsync(user);
+            if (!create.Succeeded)
+            {
+                ViewData["OtpStep"] = "phone";
+                foreach (var error in create.Errors)
+                    ModelState.AddModelError(string.Empty, error.Description);
+                return View("Login", new OtpLoginVm { Phone = IranianPhone.ToLocalDisplay(phoneE164) });
+            }
+        }
+        else if (!user.PhoneNumberConfirmed)
+        {
+            user.PhoneNumberConfirmed = true;
+            await _users.UpdateAsync(user);
+        }
+
+        await _signIn.SignInAsync(user, isPersistent: true);
 
         var anon = Request.Cookies[CartController.AnonCookie];
         if (!string.IsNullOrWhiteSpace(anon))
@@ -308,33 +368,20 @@ public class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult Register()
-    {
-        ViewData["Title"] = "Register";
-        return View();
-    }
+    public IActionResult Register(string? returnUrl = null)
+        => RedirectToAction(nameof(Login), new { returnUrl });
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(string email, string password, string? displayName)
+    private static string MapOtpError(string? code) => code switch
     {
-        var user = new ApplicationUser
-        {
-            UserName = email,
-            Email = email,
-            DisplayName = displayName
-        };
-        var result = await _users.CreateAsync(user, password);
-        if (!result.Succeeded)
-        {
-            foreach (var error in result.Errors)
-                ModelState.AddModelError(string.Empty, error.Description);
-            return View();
-        }
-
-        await _signIn.SignInAsync(user, isPersistent: true);
-        return RedirectToAction("Index", "Home");
-    }
+        "invalid_phone" => "شماره موبایل معتبر نیست.",
+        "cooldown" => "لطفاً کمی صبر کنید و دوباره درخواست کد بدهید.",
+        "sms_failed" => "ارسال پیامک ناموفق بود. دوباره تلاش کنید.",
+        "invalid_code" => "کد وارد شده نادرست است.",
+        "no_challenge" => "ابتدا درخواست کد بدهید.",
+        "expired" => "کد منقضی شده است. دوباره درخواست کنید.",
+        "too_many_attempts" => "تعداد تلاش‌ها بیش از حد است. دوباره کد بگیرید.",
+        _ => "ورود ناموفق بود."
+    };
 
     [Authorize]
     public async Task<IActionResult> Index(CancellationToken ct)
@@ -364,4 +411,10 @@ public class AccountController : Controller
         await _signIn.SignOutAsync();
         return RedirectToAction("Index", "Home");
     }
+}
+
+public sealed class OtpLoginVm
+{
+    public string? Phone { get; set; }
+    public string? PhoneE164 { get; set; }
 }

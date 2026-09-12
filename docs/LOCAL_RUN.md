@@ -120,3 +120,18 @@ Railway فقط برای production بماند؛ تست UI/API را روی localh
 | `Production` | Sqlite روی Railway (فعلی) یا SQL با env | `appsettings.Production.json` |
 
 روی استارتاپ، برای SqlServer اپلیکیشن `MigrateAsync` را هم صدا می‌زند؛ با این حال اجرای صریح `dotnet ef database update` قبل از run توصیه‌شده است.
+
+## Sms OTP (storefront login)
+
+Default provider is `Development` (writes SMS files under `App_Data/sms` and can show the code on the login page).
+
+When ready for Kavenegar, set in `appsettings`:
+
+```json
+"Sms": {
+  "Provider": "Kavenegar",
+  "Kavenegar": { "ApiKey": "YOUR_KEY", "Sender": "YOUR_SENDER" }
+}
+```
+
+Ops console login remains email/password.

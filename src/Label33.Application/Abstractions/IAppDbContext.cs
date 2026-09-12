@@ -43,6 +43,7 @@ public interface IAppDbContext
     DbSet<AuditLog> AuditLogs { get; }
     DbSet<PageViewLog> PageViewLogs { get; }
     DbSet<OnlineUser> OnlineUsers { get; }
+    DbSet<SmsOtpChallenge> SmsOtpChallenges { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
