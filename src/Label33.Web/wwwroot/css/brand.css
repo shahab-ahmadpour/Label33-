@@ -523,12 +523,16 @@ html[dir="rtl"] .hero-home__scroll {
 
 .hero-home__gold {
   position: absolute;
-  top: 12%;
-  right: 14%;
-  width: clamp(3.5rem, 8vw, 5.5rem);
-  height: clamp(3.5rem, 8vw, 5.5rem);
+  top: 11%;
+  right: 12%;
+  width: clamp(4.75rem, 11vw, 7.25rem);
+  height: clamp(4.75rem, 11vw, 7.25rem);
   border-radius: 50%;
-  background: var(--gold);
+  background: radial-gradient(circle at 35% 30%, #f0d06a 0%, var(--gold) 55%, #c99620 100%);
+  box-shadow:
+    0 0 18px 6px color-mix(in srgb, var(--gold) 55%, transparent),
+    0 0 42px 16px color-mix(in srgb, var(--gold) 35%, transparent),
+    0 0 80px 28px color-mix(in srgb, var(--gold) 18%, transparent);
 }
 
 html[dir="rtl"] .hero-home__gold {
