@@ -1,71 +1,83 @@
 @model IReadOnlyList<Label33.Application.Catalog.ProductListItemDto>
 @inject Label33.Web.Localization.IBrandLocalizer L
 @{
-    var categories = ViewData["Categories"] as IReadOnlyList<Label33.Application.Catalog.CategoryDto>
-        ?? Array.Empty<Label33.Application.Catalog.CategoryDto>();
-    var tones = new[] { "cat-tile--ink", "cat-tile--olive", "cat-tile--tan", "cat-tile--ember" };
+    ViewData["Title"] = L["collections.title"];
+
+    var slots = new (string Key, string Label, string Tone)[]
+    {
+        ("T-SHIRTS", "T-SHIRTS", "cream"),
+        ("HOODIES", "HOODIES", "teal"),
+        ("SWEATSHIRTS", "SWEATSHIRTS", "slate"),
+        ("JOGGERS", "JOGGERS", "forest")
+    };
+
+    Label33.Application.Catalog.ProductListItemDto? Pick(string category)
+    {
+        bool Match(Label33.Application.Catalog.ProductListItemDto p) =>
+            string.Equals(p.ShortDescription, category, StringComparison.OrdinalIgnoreCase)
+            || (category == "T-SHIRTS" && (
+                Contains(p, "Tee") || Contains(p, "T-Shirt") || Contains(p, "Tshirt") || Contains(p, "تی")))
+            || (category == "HOODIES" && (Contains(p, "Hoodie") || Contains(p, "هودی")))
+            || (category == "SWEATSHIRTS" && (Contains(p, "Sweat") || Contains(p, "سویش") || Contains(p, "Crew")))
+            || (category == "JOGGERS" && (Contains(p, "Jogger") || Contains(p, "جاگر")));
+
+        return Model.FirstOrDefault(Match);
+    }
+
+    static bool Contains(Label33.Application.Catalog.ProductListItemDto p, string token) =>
+        (p.Name?.Contains(token, StringComparison.OrdinalIgnoreCase) ?? false)
+        || (p.ShortDescription?.Contains(token, StringComparison.OrdinalIgnoreCase) ?? false);
 }
 
-<section class="container story" style="padding-bottom:2rem;">
-    <div class="eyebrow eyebrow-brand">
-        <img class="brand-mark brand-mark--eyebrow" src="~/brand/logo/33-mark.png" alt="33" width="72" height="56" />
+<section class="collection-board">
+    <div class="container collection-board__head">
+        <div class="eyebrow eyebrow-brand">
+            <img class="brand-mark brand-mark--eyebrow" src="~/brand/logo/33-mark-cream.png" alt="33" width="72" height="56" />
+        </div>
+        <h1 class="collection-board__title">@L["collections.title"]</h1>
+        <p class="collection-board__intro">@L["collections.intro"]</p>
     </div>
-    <h1 class="display">@L["collections.title"]</h1>
-    <p style="max-width:36rem;color:var(--muted);">@L["collections.intro"]</p>
-</section>
 
-<section class="container">
-    <div class="cat-grid">
-        @if (categories.Count == 0)
-        {
-            <a class="cat-tile cat-tile--ink" asp-controller="Shop" asp-action="Index" asp-route-category="T-SHIRTS">T-Shirts</a>
-            <a class="cat-tile cat-tile--olive" asp-controller="Shop" asp-action="Index" asp-route-category="HOODIES">Hoodies</a>
-            <a class="cat-tile cat-tile--tan" asp-controller="Shop" asp-action="Index" asp-route-category="SWEATSHIRTS">Sweatshirts</a>
-            <a class="cat-tile cat-tile--ember" asp-controller="Shop" asp-action="Index" asp-route-category="JOGGERS">Joggers</a>
-        }
-        else
-        {
-            @for (var i = 0; i < categories.Count; i++)
+    <div class="container">
+        <div class="collection-grid">
+            @for (var i = 0; i < slots.Length; i++)
             {
-                var c = categories[i];
-                <a class="cat-tile @tones[i % tones.Length]" asp-controller="Shop" asp-action="Index" asp-route-category="@c.Name">@c.Name</a>
-            }
-        }
-    </div>
-</section>
+                var slot = slots[i];
+                var product = Pick(slot.Key);
+                var heightClass = (i % 4) switch
+                {
+                    0 => "collection-card--mid",
+                    1 => "collection-card--tall",
+                    2 => "collection-card--short",
+                    _ => "collection-card--tall"
+                };
 
-<section class="hero hero--dark" style="min-height:64vh;">
-    <div class="hero__visual">
-        <img src="~/brand/diyar/diyar-main.png" alt="Campaign" />
-    </div>
-    <div class="hero__content">
-        <div class="eyebrow">Campaign</div>
-        <h2 class="display">Everyday Uniform</h2>
-        <p>@L["collections.campaign"]</p>
-        <a class="btn btn--tan" asp-controller="Shop" asp-action="Index">@L["hero.cta.shop"]</a>
-    </div>
-</section>
-
-<section class="container" style="padding-block:4rem;">
-    <div class="product-grid">
-        @foreach (var p in Model.Take(6))
-        {
-            <article class="product-card">
-                <a asp-controller="Products" asp-action="Details" asp-route-slug="@p.Slug">
-                    <div class="product-card__media">
-                        <img src="@Url.Content(StorefrontMedia.Resolve(p.PrimaryImage))" alt="@p.Name" class="@(string.IsNullOrWhiteSpace(p.PrimaryImage) ? "is-fallback" : "is-photo")" />
-                    </div>
-                </a>
-                <div class="product-card__meta" style="opacity:1;transform:none;position:relative;background:transparent;">
-                    <div>
-                        <div class="product-card__name">@p.Name</div>
-                        @if (p.FromPrice.HasValue)
+                <a class="collection-card @heightClass"
+                   asp-controller="Shop"
+                   asp-action="Index"
+                   asp-route-category="@slot.Key">
+                    <div class="collection-card__media collection-card__media--@slot.Tone">
+                        @if (product is not null && !string.IsNullOrWhiteSpace(product.PrimaryImage))
                         {
-                            <div class="product-card__price">@Money.FormatToman(p.FromPrice.Value) @Money.DisplayUnit</div>
+                            <img src="@Url.Content(StorefrontMedia.Resolve(product.PrimaryImage))" alt="@product.Name" />
+                        }
+                        else
+                        {
+                            <img class="collection-card__fallback" src="~/brand/diyar/diyar-main.png" alt="" />
                         }
                     </div>
-                </div>
-            </article>
-        }
+                    <div class="collection-card__meta">
+                        <div class="collection-card__cat">@slot.Label</div>
+                        <div class="collection-card__row">
+                            <div class="collection-card__name">@(product?.Name ?? slot.Label)</div>
+                            @if (product?.FromPrice is decimal price)
+                            {
+                                <div class="collection-card__price">@Money.FormatToman(price) @Money.DisplayUnit</div>
+                            }
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
     </div>
 </section>
