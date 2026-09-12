@@ -13,7 +13,7 @@ public class HomeController : Controller
     public async Task<IActionResult> Index(CancellationToken ct)
     {
         ViewData["ShowIntro"] = true;
-        ViewData["Title"] = "33";
+        ViewData["DocumentTitle"] = "33-home";
         var products = await _catalog.ListPublishedAsync(ct: ct);
         return View(products.Take(3).ToList());
     }
