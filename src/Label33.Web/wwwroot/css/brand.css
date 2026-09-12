@@ -489,11 +489,16 @@ html[dir="rtl"] .hero-home__gold {
   top: 50%;
   left: 61%;
   translate: -50% -50%;
-  width: min(28vw, 240px);
-  height: auto;
+  width: min(34vw, 300px);
+  aspect-ratio: 1 / 1;
   z-index: 2;
   filter: drop-shadow(0 18px 40px color-mix(in srgb, var(--ink) 28%, transparent));
   pointer-events: none;
+}
+
+.hero-home__bird .diyar-flap--hero {
+  width: 100%;
+  height: 100%;
 }
 
 html[dir="rtl"] .hero-home__bird {
@@ -510,9 +515,9 @@ html[dir="rtl"] .hero-home__bird {
   }
   .hero-home__bird {
     top: auto;
-    bottom: 26vh;
+    bottom: 22vh;
     left: 50%;
-    width: min(46vw, 200px);
+    width: min(52vw, 240px);
   }
   html[dir="rtl"] .hero-home__bird { left: 50%; }
   .hero-home__cream { padding-bottom: 7rem; }
@@ -1161,10 +1166,10 @@ html[dir="rtl"] .hero-home__bird {
 .site-footer__bottom > div:last-child { text-align: end; }
 
 .site-footer__bird {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
-  filter: brightness(0) invert(0.92);
+  filter: drop-shadow(0 2px 8px color-mix(in srgb, var(--ink) 25%, transparent));
 }
 
 @media (max-width: 900px) {
