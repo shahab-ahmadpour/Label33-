@@ -52,14 +52,14 @@
         <div class="product-grid">
             @foreach (var p in Model)
             {
-                <article class="product-card">
-                    <a asp-controller="Products" asp-action="Details" asp-route-slug="@p.Slug">
+                <article class="product-card product-card--dark">
+                    <a class="product-card__link" asp-controller="Products" asp-action="Details" asp-route-slug="@p.Slug">
                         <div class="product-card__media">
                             <img src="@Url.Content(StorefrontMedia.Resolve(p.PrimaryImage))" alt="@p.Name" class="@(string.IsNullOrWhiteSpace(p.PrimaryImage) ? "is-fallback" : "is-photo")" />
                         </div>
                     </a>
                     <div class="product-card__meta">
-                        <div>
+                        <div class="product-card__info">
                             <div class="product-card__name">@p.Name</div>
                             @if (p.FromPrice.HasValue)
                             {
