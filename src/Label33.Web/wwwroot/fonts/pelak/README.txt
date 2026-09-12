@@ -1,13 +1,7 @@
-Drop licensed Pelak woff2 files from Fontiran here.
+Place licensed Fontiran Pelak WOFF2 files here:
 
-Expected names:
-- Pelak-Thin.woff2
 - Pelak-Light.woff2
 - Pelak-Regular.woff2
-- Pelak-Medium.woff2
-- Pelak-SemiBold.woff2
 - Pelak-Bold.woff2
-- Pelak-ExtraBold.woff2
-- Pelak-Black.woff2
 
-Buy: https://fontiran.com/fonts/pelak
+These files are loaded by /css/pelak.css for the Persian storefront.
