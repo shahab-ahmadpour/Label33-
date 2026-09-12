@@ -93,21 +93,48 @@ DIFFERENT MINDS.</p>
 </main>
 
 <footer class="site-footer">
-    <div class="container site-footer__grid">
-        <div>
-            <strong>33</strong>
-            <div>@L["footer.tag"]</div>
+    <div class="container">
+        <div class="site-footer__top">
+            <div class="site-footer__brand">
+                <div class="site-footer__num">33</div>
+                <div class="site-footer__tag">@L["footer.tag"]</div>
+                <div class="site-footer__since">since 2026</div>
+            </div>
+            <div class="site-footer__cols">
+                <div class="site-footer__col">
+                    <div class="site-footer__heading">@L["footer.shop"]</div>
+                    <a asp-controller="Shop" asp-action="Index">@L["nav.shop"]</a>
+                    <a asp-controller="Collections" asp-action="Index">@L["nav.collections"]</a>
+                    <a asp-controller="Info" asp-action="Shipping">@L["footer.shipping"]</a>
+                </div>
+                <div class="site-footer__col">
+                    <div class="site-footer__heading">@L["footer.discover"]</div>
+                    <a asp-controller="About" asp-action="Index">@L["nav.about"]</a>
+                    <a asp-controller="Diyar" asp-action="Index">@L["nav.diyar"]</a>
+                    <a asp-controller="Info" asp-action="Contact">@L["footer.contact"]</a>
+                </div>
+                <div class="site-footer__col">
+                    <div class="site-footer__heading">@L["footer.follow"]</div>
+                    <a href="https://instagram.com/33label" target="_blank" rel="noopener">@@33label</a>
+                    <a href="https://instagram.com/33label" target="_blank" rel="noopener">Instagram</a>
+                    <a href="https://t.me/33label" target="_blank" rel="noopener">Telegram</a>
+                </div>
+            </div>
         </div>
-        <div class="footer-links">
-            <a asp-controller="Info" asp-action="Shipping">@L["footer.shipping"]</a>
-            <a asp-controller="Info" asp-action="Returns">@L["footer.returns"]</a>
-            <a asp-controller="Info" asp-action="Contact">@L["footer.contact"]</a>
-            <a asp-controller="Info" asp-action="Privacy">@L["footer.privacy"]</a>
+
+        <div class="site-footer__flight">
+            <div class="site-footer__flight-copy">@L["footer.flightList"]</div>
+            <form class="site-footer__flight-form" action="#" method="post" onsubmit="return false;">
+                <label class="sr-only" for="flight-email">Email</label>
+                <input id="flight-email" type="email" name="email" placeholder="@L["footer.emailPlaceholder"]" autocomplete="email" />
+                <button type="submit" aria-label="Join">→</button>
+            </form>
         </div>
-        <div class="footer-contact">
-            <a href="https://instagram.com/33label" target="_blank" rel="noopener">Instagram</a>
-            <a href="https://t.me/33label" target="_blank" rel="noopener">Telegram</a>
-            <a href="tel:+989001234567">+98 900 123 4567</a>
+
+        <div class="site-footer__bottom">
+            <div>© 2026 33. @L["footer.rights"]</div>
+            <img class="site-footer__bird" src="~/brand/diyar/diyar-mark.svg" alt="" width="44" height="44" />
+            <div>@L["footer.designed"]</div>
         </div>
     </div>
 </footer>

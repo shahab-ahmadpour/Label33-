@@ -1,65 +1,71 @@
-﻿@model IReadOnlyList<Label33.Application.Catalog.ProductListItemDto>
+@model IReadOnlyList<Label33.Application.Catalog.ProductListItemDto>
 @inject Label33.Web.Localization.IBrandLocalizer L
 @{
     ViewData["Title"] = "33";
 }
 
-<section class="hero-home">
-    <img class="hero-home__mark" src="~/brand/diyar/diyar-main.png" alt="" aria-hidden="true" />
-    <div class="hero-home__inner">
-        <div class="eyebrow">33LABEL · 2026</div>
+<section class="hero-home" aria-label="33">
+    <div class="hero-home__cream">
+        <div class="hero-home__eyebrow">33 / since 2026</div>
         <h1 class="hero-home__title">
-            <span class="line">SAME</span>
-            <span class="line">CLOTHES.</span>
-            <span class="line accent">DIFFERENT</span>
-            <span class="line">MINDS.</span>
+            <span class="line">SAME CLOTHES.</span>
+            <span class="line">DIFFERENT MINDS.</span>
         </h1>
         <p class="hero-home__support">@L["hero.support"]</p>
         <div class="hero-home__cta">
-            <a class="btn" asp-controller="Shop" asp-action="Index">@L["hero.cta.shop"]</a>
-            <a class="btn btn--ghost" asp-controller="Diyar" asp-action="Index">@L["hero.cta.diyar"]</a>
+            <a class="btn" asp-controller="Shop" asp-action="Index">@L["hero.cta.shop"] →</a>
+            <a class="btn btn--ghost" asp-controller="Diyar" asp-action="Index">@L["hero.cta.diyar"] →</a>
         </div>
+        <a class="hero-home__scroll" href="#home-shop">@L["hero.scroll"] ↓</a>
     </div>
+    <div class="hero-home__forest" aria-hidden="true">
+        <span class="hero-home__gold"></span>
+    </div>
+    <img class="hero-home__bird" src="~/brand/diyar/diyar-mark.svg" alt="" width="240" height="240" />
 </section>
 
 <section class="band band--ink">
     <div class="container" style="display:grid;gap:1rem;max-width:42rem;">
         <div class="eyebrow">Manifesto</div>
-        <h2 class="display" style="font-size:clamp(1.8rem,4vw,2.8rem);margin:0;color:var(--tan);">Three people. Three perspectives. One brand.</h2>
+        <h2 class="display" style="font-size:clamp(1.8rem,4vw,2.8rem);margin:0;color:var(--tan);">@L["home.manifestoTitle"]</h2>
         <p style="margin:0;">SAME CLOTHES. DIFFERENT MINDS.</p>
     </div>
 </section>
 
 @if (Model.Count > 0)
 {
-    <section class="container" style="padding-block: 4rem;">
-        <div class="eyebrow">Drop</div>
-        <h2 class="display" style="font-size: clamp(1.8rem, 4vw, 2.8rem); margin: 0.4rem 0 2rem;">@L["shop.title"]</h2>
-        <div class="product-grid">
-            @foreach (var p in Model)
-            {
-                <article class="product-card">
-                    <a asp-controller="Products" asp-action="Details" asp-route-slug="@p.Slug">
-                        <div class="product-card__media">
-                            <img src="@Url.Content(StorefrontMedia.Resolve(p.PrimaryImage))" alt="@p.Name" class="@(string.IsNullOrWhiteSpace(p.PrimaryImage) ? "is-fallback" : "is-photo")" />
+    <section class="home-shop" id="home-shop">
+        <div class="container">
+            <div class="home-shop__head">
+                <h2 class="home-shop__title">@L["shop.title"]</h2>
+                <a class="home-shop__all" asp-controller="Shop" asp-action="Index">@L["shop.viewAll"] ↗</a>
+            </div>
+            <div class="product-grid product-grid--home">
+                @foreach (var p in Model.Take(4))
+                {
+                    <article class="product-card product-card--dark">
+                        <a asp-controller="Products" asp-action="Details" asp-route-slug="@p.Slug">
+                            <div class="product-card__media">
+                                <img src="@Url.Content(StorefrontMedia.Resolve(p.PrimaryImage))" alt="@p.Name" class="@(string.IsNullOrWhiteSpace(p.PrimaryImage) ? "is-fallback" : "is-photo")" />
+                            </div>
+                        </a>
+                        <div class="product-card__meta">
+                            <div>
+                                <div class="product-card__name">@p.Name</div>
+                                @if (p.FromPrice.HasValue)
+                                {
+                                    <div class="product-card__price">@Money.FormatToman(p.FromPrice.Value) @Money.DisplayUnit</div>
+                                }
+                            </div>
+                            <form asp-controller="Cart" asp-action="QuickAdd" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="slug" value="@p.Slug" />
+                                <button class="btn btn--tan" type="submit">@L["shop.quickAdd"]</button>
+                            </form>
                         </div>
-                    </a>
-                    <div class="product-card__meta">
-                        <div>
-                            <div class="product-card__name">@p.Name</div>
-                            @if (p.FromPrice.HasValue)
-                            {
-                                <div class="product-card__price">@Money.FormatToman(p.FromPrice.Value) @Money.DisplayUnit</div>
-                            }
-                        </div>
-                        <form asp-controller="Cart" asp-action="QuickAdd" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="slug" value="@p.Slug" />
-                            <button class="btn btn--tan" type="submit">@L["shop.quickAdd"]</button>
-                        </form>
-                    </div>
-                </article>
-            }
+                    </article>
+                }
+            </div>
         </div>
     </section>
 }
