@@ -526,25 +526,26 @@ html[dir="rtl"] .hero-home__scroll {
   position: relative;
   background: var(--forest);
   min-height: 100%;
+  overflow: hidden;
 }
 
+/* Mustard corner disc — oversized so only ~half sits inside the green panel */
 .hero-home__gold {
   position: absolute;
-  top: 10%;
-  right: 11%;
-  width: clamp(5.75rem, 13vw, 8.75rem);
-  height: clamp(5.75rem, 13vw, 8.75rem);
+  top: 0;
+  right: 0;
+  translate: 42% -42%;
+  width: clamp(16rem, 42vw, 32rem);
+  height: clamp(16rem, 42vw, 32rem);
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #d8b84a 0%, #c4a035 52%, #a88628 100%);
-  box-shadow:
-    0 0 20px 7px color-mix(in srgb, #c4a035 58%, transparent),
-    0 0 48px 18px color-mix(in srgb, #c4a035 36%, transparent),
-    0 0 90px 32px color-mix(in srgb, #c4a035 18%, transparent);
+  background: #c4a035;
+  box-shadow: none;
 }
 
 html[dir="rtl"] .hero-home__gold {
   right: auto;
-  left: 14%;
+  left: 0;
+  translate: -42% -42%;
 }
 
 .hero-home__bird {
