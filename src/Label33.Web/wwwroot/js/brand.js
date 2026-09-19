@@ -100,8 +100,8 @@
       const raw = clamp((now - start) / duration, 0, 1);
       const path = flightProgress(raw);
 
-      // Natural wing-beat: faster on enter/exit, slower while coasting
-      const frameInterval = path.coast ? 150 : 95;
+      // Natural wing-beat on the orange-beak mark: faster in flight, slower while coasting
+      const frameInterval = path.coast ? 140 : 85;
       if (frameCount > 1 && now - lastFrameAt >= frameInterval) {
         lastFrameAt = now;
         frame = (frame + 1) % frameCount;
