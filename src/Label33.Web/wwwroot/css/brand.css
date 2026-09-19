@@ -319,18 +319,42 @@ button, input, select { font: inherit; color: inherit; }
 
 .intro__bird {
   position: absolute;
-  left: -48%;
-  top: 28%;
-  width: min(42vw, 280px);
+  left: -42%;
+  top: 58%;
+  width: min(40vw, 268px);
   height: auto;
   aspect-ratio: 1 / 1;
-  max-height: 38vh;
+  max-height: 36vh;
   transform: translate(-50%, -50%);
   opacity: 0;
   will-change: transform, left, top, opacity;
   pointer-events: none;
-  filter: drop-shadow(0 18px 28px color-mix(in srgb, var(--ink) 18%, transparent));
+  filter: drop-shadow(0 22px 36px color-mix(in srgb, var(--ink) 22%, transparent));
   z-index: 3;
+}
+
+/* Live orange-beak Diyar — body + pivoting wing */
+.diyar-fly {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.diyar-fly__body,
+.diyar-fly__wing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.diyar-fly__wing {
+  transform-origin: 48.09% 46.49%;
+  will-change: transform;
 }
 
 .diyar-flap {
@@ -1102,7 +1126,8 @@ html[dir="rtl"] .hero-home__bird {
   min-height: 12rem;
 }
 
-.diyar-flap--pose {
+.diyar-flap--pose,
+.diyar-fly--pose {
   width: min(100%, 240px);
   aspect-ratio: 1 / 1;
   height: auto;
