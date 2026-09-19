@@ -4,8 +4,6 @@
   const nav = document.getElementById('site-nav');
   const burger = document.getElementById('nav-burger');
 
-  const FRAME_COUNT = 4;
-
   function clamp(v, a, b) {
     return Math.max(a, Math.min(b, v));
   }
@@ -21,7 +19,8 @@
   function setFlapFrame(root, frameIndex) {
     const frames = getFrames(root);
     if (!frames.length) return;
-    const i = ((frameIndex % FRAME_COUNT) + FRAME_COUNT) % FRAME_COUNT;
+    const count = frames.length;
+    const i = ((frameIndex % count) + count) % count;
     frames.forEach((img, idx) => {
       img.classList.toggle('is-active', idx === i);
     });
@@ -30,11 +29,18 @@
 
   function runSpriteFlap(root, { fps = 6 } = {}) {
     if (!root) return () => {};
+    const frames = getFrames(root);
+    if (frames.length <= 1) {
+      setFlapFrame(root, 0);
+      return () => {};
+    }
+
     let frame = 0;
     let last = performance.now();
     let raf = 0;
     let stopped = false;
     const interval = 1000 / fps;
+    const count = frames.length;
 
     setFlapFrame(root, 0);
 
@@ -42,7 +48,7 @@
       if (stopped) return;
       if (now - last >= interval) {
         last = now;
-        frame = (frame + 1) % FRAME_COUNT;
+        frame = (frame + 1) % count;
         setFlapFrame(root, frame);
       }
       raf = requestAnimationFrame(tick);
