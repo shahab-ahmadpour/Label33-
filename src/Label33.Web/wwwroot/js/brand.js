@@ -100,18 +100,17 @@
       const raw = clamp((now - start) / duration, 0, 1);
       const path = flightProgress(raw);
 
-      if (frameCount > 1) {
-        const frameInterval = path.coast ? 180 : 140;
-        if (now - lastFrameAt >= frameInterval) {
-          lastFrameAt = now;
-          frame = (frame + 1) % frameCount;
-          setFlapFrame(root, frame);
-        }
+      // Natural wing-beat: faster on enter/exit, slower while coasting
+      const frameInterval = path.coast ? 150 : 95;
+      if (frameCount > 1 && now - lastFrameAt >= frameInterval) {
+        lastFrameAt = now;
+        frame = (frame + 1) % frameCount;
+        setFlapFrame(root, frame);
       }
 
       const bob =
         frameCount > 1
-          ? (frame === 2 ? -1.6 : frame === 0 ? 0.9 : -0.4)
+          ? (frame === 0 ? 1.1 : frame === 1 ? -0.2 : frame === 2 ? -1.8 : -0.5)
           : Math.sin(now / 220) * 1.2;
       const tilt =
         path.phase === 'enter' ? -6 + raw * 10 :
