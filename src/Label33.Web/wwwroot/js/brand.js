@@ -85,6 +85,7 @@
 
   function runIntroFlight(birdEl, onDone) {
     const root = birdEl.querySelector('[data-flap-root]') || birdEl.querySelector('.diyar-flap');
+    const frameCount = Math.max(getFrames(root).length, 1);
     const duration = 9000;
     const start = performance.now();
     let raf = 0;
@@ -99,14 +100,19 @@
       const raw = clamp((now - start) / duration, 0, 1);
       const path = flightProgress(raw);
 
-      const frameInterval = path.coast ? 180 : 140;
-      if (now - lastFrameAt >= frameInterval) {
-        lastFrameAt = now;
-        frame = (frame + 1) % FRAME_COUNT;
-        setFlapFrame(root, frame);
+      if (frameCount > 1) {
+        const frameInterval = path.coast ? 180 : 140;
+        if (now - lastFrameAt >= frameInterval) {
+          lastFrameAt = now;
+          frame = (frame + 1) % frameCount;
+          setFlapFrame(root, frame);
+        }
       }
 
-      const bob = frame === 2 ? -1.6 : frame === 0 ? 0.9 : -0.4;
+      const bob =
+        frameCount > 1
+          ? (frame === 2 ? -1.6 : frame === 0 ? 0.9 : -0.4)
+          : Math.sin(now / 220) * 1.2;
       const tilt =
         path.phase === 'enter' ? -6 + raw * 10 :
         path.phase === 'pause' ? 2 + Math.sin(now / 280) * 1.5 :
