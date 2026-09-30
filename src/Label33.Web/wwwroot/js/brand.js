@@ -24,84 +24,102 @@
     return -(Math.cos(Math.PI * x) - 1) / 2;
   }
 
-  /**
-   * Asymmetric wing beat — fast powerful downstroke, slower recovery.
-   * Returns degrees for the wing layer around the shoulder pivot.
-   */
-  function wingStrokeAngle(phase01) {
-    const p = ((phase01 % 1) + 1) % 1;
-    if (p < 0.38) {
-      const u = easeOutQuad(p / 0.38);
-      return lerp(34, -36, u);
-    }
-    const u = easeInOutSine((p - 0.38) / 0.62);
-    return lerp(-36, 34, u);
+  function getFrames(root) {
+    return root ? Array.from(root.querySelectorAll('.diyar-flap__frame')) : [];
   }
 
   /**
-   * Continuous glide path shaped for a logo mark, not a sprite character:
-   * rise in → soft soar above the mark → peel away.
+   * Soft crossfade between neighboring flap frames.
+   * phase: continuous index in [0, frameCount-1].
    */
+  function setFlapBlend(root, phase) {
+    const frames = getFrames(root);
+    if (!frames.length) return;
+    const n = frames.length;
+    const max = n - 1;
+    const p = clamp(phase, 0, max);
+    const i = Math.floor(p);
+    const j = Math.min(i + 1, max);
+    const t = p - i;
+    const s = t * t * (3 - 2 * t);
+    frames.forEach((img, idx) => {
+      let op = 0;
+      if (idx === i && idx === j) op = 1;
+      else if (idx === i) op = 1 - s;
+      else if (idx === j) op = s;
+      img.style.opacity = String(op);
+      img.classList.toggle('is-active', op > 0.45);
+    });
+    root.dataset.frame = String(i + 1);
+  }
+
+  /**
+   * Frames are ordered down → up (01 lowest … 04 = reference wings-up).
+   * Fast downstroke (up→down), slower recovery (down→up).
+   */
+  function flapPhase(elapsedSec, hz, frameCount) {
+    const n = Math.max(frameCount, 2);
+    const max = n - 1;
+    const linear = ((elapsedSec * hz) % 1 + 1) % 1;
+    if (linear < 0.36) {
+      const t = easeOutQuad(linear / 0.36);
+      return lerp(max, 0, t); // up → down
+    }
+    const t = easeInOutSine((linear - 0.36) / 0.64);
+    return lerp(0, max, t); // down → up
+  }
+
+  /** Calm mark flight: climb → soft soar → exit */
   function flightPose(t) {
-    if (t < 0.34) {
-      const u = easeInOutCubic(t / 0.34);
+    if (t < 0.36) {
+      const u = easeInOutCubic(t / 0.36);
       return {
-        x: -42 + u * 80,
-        y: 58 - u * 34,
-        flapHz: 3.2,
-        flapAmp: 1,
-        bank: lerp(-18, -4, u),
-        scale: lerp(0.78, 1.02, u),
-        phase: 'enter',
+        x: -40 + u * 78,
+        y: 56 - u * 32,
+        flapHz: 1.9,
+        bank: lerp(-12, -3, u),
+        scale: lerp(0.84, 1.04, u),
       };
     }
-    if (t < 0.58) {
-      const u = (t - 0.34) / 0.24;
-      const drift = Math.sin(u * Math.PI) * 1.4;
-      const breath = Math.sin(u * Math.PI * 2) * 0.55;
+    if (t < 0.6) {
+      const u = (t - 0.36) / 0.24;
+      const breath = Math.sin(u * Math.PI * 2) * 0.4;
       return {
-        x: 38 + drift,
+        x: 38 + Math.sin(u * Math.PI) * 1.0,
         y: 24 + breath,
-        flapHz: 1.15,
-        flapAmp: 0.28,
-        bank: -2 + Math.sin(u * Math.PI * 2) * 2.2,
-        scale: 1.05,
-        phase: 'soar',
+        flapHz: 0.85,
+        bank: -1.2 + Math.sin(u * Math.PI * 2) * 1.4,
+        scale: 1.06,
       };
     }
-    const u = easeInOutCubic((t - 0.58) / 0.42);
+    const u = easeInOutCubic((t - 0.6) / 0.4);
     return {
-      x: 38 + u * 72,
-      y: 24 - u * 30,
-      flapHz: lerp(2.4, 3.6, u),
-      flapAmp: lerp(0.7, 1, u),
-      bank: lerp(2, 16, u),
-      scale: lerp(1.02, 0.88, u),
-      phase: 'exit',
+      x: 38 + u * 70,
+      y: 24 - u * 28,
+      flapHz: lerp(1.55, 2.15, u),
+      bank: lerp(2, 11, u),
+      scale: lerp(1.03, 0.9, u),
     };
   }
 
-  function getWing(root) {
-    return root?.querySelector?.('.diyar-fly__wing') || null;
-  }
-
-  function setWingAngle(root, deg) {
-    const wing = getWing(root);
-    if (!wing) return;
-    wing.style.transform = `rotate(${deg}deg)`;
-  }
-
-  function runLiveFlap(root, { hz = 2.2, amp = 1 } = {}) {
-    if (!root || !getWing(root)) return () => {};
+  function runSpriteFlap(root, { hz = 1.45 } = {}) {
+    const frames = getFrames(root);
+    if (!root || frames.length <= 1) {
+      if (frames[0]) frames[0].style.opacity = '1';
+      return () => {};
+    }
     let raf = 0;
     let stopped = false;
     const start = performance.now();
 
+    frames.forEach((img) => {
+      img.style.opacity = '0';
+    });
+
     function tick(now) {
       if (stopped) return;
       const elapsed = (now - start) / 1000;
-      const phase = elapsed * hz;
-      setWingAngle(root, wingStrokeAngle(phase) * amp);
+      setFlapBlend(root, flapPhase(elapsed, hz, frames.length));
       raf = requestAnimationFrame(tick);
     }
 
@@ -113,16 +131,20 @@
   }
 
   function runIntroFlight(birdEl, onDone) {
-    const root = birdEl.querySelector('[data-fly-root]') || birdEl.querySelector('.diyar-fly');
-    const duration = 7800;
+    const root = birdEl.querySelector('[data-flap-root]') || birdEl.querySelector('.diyar-flap');
+    const frames = getFrames(root);
+    const frameCount = Math.max(frames.length, 1);
+    const duration = 8200;
     const start = performance.now();
     let raf = 0;
     let stopped = false;
-    let prevX = null;
-    let prevY = null;
-    let smoothBank = -14;
     let flapClock = 0;
     let lastNow = start;
+    let smoothBank = -10;
+
+    frames.forEach((img) => {
+      img.style.opacity = '0';
+    });
 
     function tick(now) {
       if (stopped) return;
@@ -133,29 +155,19 @@
       const pose = flightPose(raw);
 
       flapClock += dt * pose.flapHz;
-      const wingDeg = wingStrokeAngle(flapClock) * pose.flapAmp;
-      setWingAngle(root, wingDeg);
+      const phase = flapPhase(flapClock, 1, frameCount);
+      setFlapBlend(root, phase);
 
-      // Lift follows downstroke: body rises as wing sweeps down
-      const stroke = ((flapClock % 1) + 1) % 1;
-      const downForce = stroke < 0.38 ? easeOutQuad(stroke / 0.38) : 0;
-      const lift = -downForce * 1.35 * pose.flapAmp;
+      // Lift on downstroke (phase moving toward frame 0)
+      const max = Math.max(frameCount - 1, 1);
+      const downAmount = 1 - phase / max; // 1 at down, 0 at up
+      const lift = -downAmount * 1.05;
 
-      // Smooth bank toward travel direction
-      if (prevX != null) {
-        const vx = pose.x - prevX;
-        const vy = pose.y - prevY;
-        const travelBank = clamp(vx * 0.55 + vy * 0.35, -22, 22);
-        smoothBank = lerp(smoothBank, pose.bank * 0.55 + travelBank * 0.45, 0.12);
-      } else {
-        smoothBank = pose.bank;
-      }
-      prevX = pose.x;
-      prevY = pose.y;
+      smoothBank = lerp(smoothBank, pose.bank, 0.1);
 
       let opacity = 1;
       if (raw < 0.06) opacity = raw / 0.06;
-      else if (raw > 0.88) opacity = (1 - raw) / 0.12;
+      else if (raw > 0.9) opacity = (1 - raw) / 0.1;
 
       birdEl.style.left = `${pose.x}%`;
       birdEl.style.top = `${pose.y + lift}%`;
@@ -177,9 +189,9 @@
     };
   }
 
-  function idleFlaps(root) {
-    root.querySelectorAll('.diyar-fly[data-flap="idle"]').forEach((el) => {
-      runLiveFlap(el, { hz: 1.65, amp: 0.72 });
+  function idleFlaps(doc) {
+    doc.querySelectorAll('.diyar-flap[data-flap="idle"]').forEach((el) => {
+      runSpriteFlap(el, { hz: 1.35 });
     });
   }
 
@@ -204,7 +216,7 @@
       if (bird) {
         stopFlight = runIntroFlight(bird, () => finishIntro(stopFlight));
       } else {
-        window.setTimeout(() => finishIntro(null), 7800);
+        window.setTimeout(() => finishIntro(null), 8200);
       }
       skip?.addEventListener('click', () => finishIntro(stopFlight));
     }

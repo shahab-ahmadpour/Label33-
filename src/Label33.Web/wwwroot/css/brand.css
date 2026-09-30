@@ -319,8 +319,8 @@ button, input, select { font: inherit; color: inherit; }
 
 .intro__bird {
   position: absolute;
-  left: -42%;
-  top: 58%;
+  left: -40%;
+  top: 56%;
   width: min(40vw, 268px);
   height: auto;
   aspect-ratio: 1 / 1;
@@ -333,7 +333,7 @@ button, input, select { font: inherit; color: inherit; }
   z-index: 3;
 }
 
-/* Live orange-beak Diyar — body + pivoting wing */
+/* Live orange-beak Diyar — body + pivoting wing (optional / Diyar page) */
 .diyar-fly {
   position: relative;
   width: 100%;
@@ -353,7 +353,7 @@ button, input, select { font: inherit; color: inherit; }
 }
 
 .diyar-fly__wing {
-  transform-origin: 48.09% 46.49%;
+  transform-origin: 48.25% 46.81%;
   will-change: transform;
 }
 
